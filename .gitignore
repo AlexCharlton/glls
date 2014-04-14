@@ -1,0 +1,6 @@
+*#
+*.import.scm
+*.so
+*.c
+*.o
+example
