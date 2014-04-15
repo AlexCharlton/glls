@@ -36,9 +36,10 @@
   (test "for (int i = 0; i < 5 ; i++){\nfoo(i);\n}\n"
         (compile-expr '(dotimes (i 5)
                                 (foo i))))
-  (test "while (i < 4) {\nfoo(i);\n}\n"
+  (test "while (i < 4) {\nif (thing){\nbreak;}\n;\nfoo(i);\n}\n"
         (compile-expr '(while (< i 4)
-			      (foo i))))
+                         (if thing (break))
+                         (foo i))))
   (test "in vec3 foo;\nin vec3 bar;\nout mat4 quox;\nuniform int baz[];\n"
         (compile-inputs '((foo #:vec3) (bar #:vec3) #:uniform (baz (#:array #:int)))
                         '((quox #:mat4))))

@@ -148,8 +148,8 @@
 
 (define glsl:if
   (match-lambda
-   [(test true) (format #f "if ~a{~%~a;}~%" (compile-expr test) (compile-expr true))]
-   [(test true false) (format #f "if ~a{~%~a;} else {~%~a;}~%"
+   [(test true) (format #f "if (~a){~%~a;}~%" (compile-expr test) (compile-expr true))]
+   [(test true false) (format #f "if (~a){~%~a;} else {~%~a;}~%"
                               (compile-expr test) (compile-expr true)
                               (compile-expr false))]
    [args (syntax-error 'if "Poorly formed:" args)]))
@@ -162,7 +162,7 @@
   (match-lambda
    [((test body . body-rest) . rest)
     (apply string-append
-     (format #f "if ~a{~%~a;~%~{~a;~%~}} " (compile-expr test) (compile-expr body)
+     (format #f "if (~a){~%~a;~%~{~a;~%~}} " (compile-expr test) (compile-expr body)
              (map compile-expr body-rest))
      (list-ec (: e rest)
               (cond
@@ -172,7 +172,7 @@
                                                             rest))]
                [(equal? (car e) 'else)
                 (format #f "else {~%~{~a;~%~}}~%" (map compile-expr (cdr e)))] 
-               [else (format #f "else if ~a{~%~{~a;~%~}} "
+               [else (format #f "else if (~a){~%~{~a;~%~}} "
                              (compile-expr (car e))
                              (map compile-expr (cdr e)))])))]
    [args (syntax-error 'cond "Poorly formed:" args)]))
@@ -251,14 +251,15 @@
 (define glsl:while
   (match-lambda
    [(test body . body-rest)
-    (format #f "while ~a {~%~a;~%~{~a;~%~}}~%"
+    (format #f "while (~a){~%~a;~%~{~a;~%~}}~%"
             (compile-expr test) (compile-expr body) (map compile-expr body-rest))]
    [expr (syntax-error 'while "Poorly formed:" expr)]))
 
 (define glsl:return
   (match-lambda
+   [() "return"]
    [(ret) (format #f "return ~a" (compile-expr ret))]
-   [args (syntax-error 'return "Can only return one thing:" args)]))
+   [args (syntax-error 'return "Can only return zero or one things:" args)]))
 
 (define *special-functions*
   (alist->hash-table
@@ -294,7 +295,9 @@
      (define . ,glsl:define)
      (dotimes . ,glsl:dotimes)
      (while . ,glsl:while)
-     (break . (lambda (a) "break;\n"))
+     (break . ,(lambda (a) "break"))
+     (continue . ,(lambda (a) "continue"))
+     (discard . ,(lambda (a) "discard"))
      (return . ,glsl:return))))
 
 ) ; end module
