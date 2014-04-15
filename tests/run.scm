@@ -13,18 +13,18 @@
         (compile-expr '(swizzle position x y z)))
   (test "array.length()"
         (compile-expr '(length array)))
-  (test "if (i == 0){\nfoo = 4;\nbar = 5;\n;} else {\nfoo = 4.0;}\n"
+  (test "if ((i == 0)){\nfoo = 4;\nbar = 5;\n;} else {\nfoo = 4.0;}\n"
         (compile-expr '(if (= i 0) 
                            (begin (set! foo 4) (set! bar 5))
                            (set! foo 4.0))))
-  (test "int foo;\nint bar = 4;\nvec4 quox[];\nvec4 baz[4];\nvec4 box[4] = vec4[](1, 3, 3, 4);\nif (foo == 1){\nfoo = 4;\n} ;\n"
+  (test "int foo;\nint bar = 4;\nvec4 quox[];\nvec4 baz[4];\nvec4 box[4] = vec4[](1, 3, 3, 4);\nif ((foo == 1)){\nfoo = 4;\n} ;\n"
         (compile-expr '(let ((foo #:int)
                              (bar #:int 4)
                              (quox (#:array #:vec4))
                              (baz (#:array #:vec4 4))
                              (box (#:array #:vec4 4) (1 3 3 4)))
                          (cond ((= foo 1) (set! foo 4))))))
-  (test "if (x < 0){\ny = 1;\n} else if (x < 5){\ny = 2;\n} else {\ny = 3;\n}\n"
+  (test "if ((x < 0)){\ny = 1;\n} else if ((x < 5)){\ny = 2;\n} else {\ny = 3;\n}\n"
         (compile-expr '(cond
                         ((< x 0) (set! y 1))
                         ((< x 5) (set! y 2))
@@ -36,7 +36,7 @@
   (test "for (int i = 0; i < 5 ; i++){\nfoo(i);\n}\n"
         (compile-expr '(dotimes (i 5)
                                 (foo i))))
-  (test "while (i < 4) {\nif (thing){\nbreak;}\n;\nfoo(i);\n}\n"
+  (test "while ((i < 4)){\nif (thing){\nbreak;}\n;\nfoo(i);\n}\n"
         (compile-expr '(while (< i 4)
                          (if thing (break))
                          (foo i))))
