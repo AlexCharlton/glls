@@ -1,5 +1,8 @@
 ;;;; glsl.scm
 ;;;;
+;;;; Methods and macros for defining, compiling, and deleting shaders and pipelines.
+;;;; Pipelines are the name that we are using to refer to OpenGL "programs"
+;;;; which is an unfortunately vague term.
 
 (module glsl
   (make-pipeline
@@ -7,10 +10,14 @@
    pipeline-attributes
    pipeline-uniforms
    create-pipeline
+   *pipelines*
    defpipeline
    defshader
+   gl-compile-shader
    compile-pipeline
-   gl-compile-shader)
+   compile-pipelines
+   delete-shader
+   delete-pipeline)
 
 (import chicken scheme srfi-69 srfi-1 miscmacros)
 (use glsl-compiler (prefix opengl-glew gl:) matchable)
@@ -29,6 +36,10 @@
            (pipeline-program p) (map shader-id (pipeline-shaders p))
            (pipeline-attributes p) (pipeline-uniforms p)))
 
+;; Used to deal with phasing issues when defining pipelines and shaders.
+;; This lets the objects being defined be visible at both macroexpansion time and
+;; runtime. Necessary for, e.g. defining a shader via defshader then using it in
+;; a pipeline.
 (define-syntax begin-also-for-syntax
   (syntax-rules ()
     ((_ forms ...)
@@ -67,6 +78,10 @@
          [uniforms (apply append (map shader-uniforms shaders))])
     (make-pipeline shaders attributes uniforms 0)))
 
+(begin-for-syntax
+ (define *pipelines* '()))
+(define *pipelines* '())
+
 (define-syntax defpipeline
   (er-macro-transformer
    (lambda (exp rename compare)
@@ -96,7 +111,9 @@
          (,(rename 'define) ,name
           (,(rename 'make-pipeline) (,(rename 'list) ,@shader-makers)
            ',attributes ',uniforms
-           0)))))))
+           0))
+         (,(rename 'set!) ,(rename '*pipelines*)
+          (,(rename 'cons) ,name ,(rename '*pipelines*))))))))
 
 
 ;;; GL compiling
@@ -131,10 +148,25 @@
             (match-let* ([(name . type) u]
                          [location (gl:get-uniform-location program name)])
                         (list name location type)))])
+    (for-each (lambda (s)
+                (gl:detach-shader program (shader-program s)))
+              (pipeline-shaders pipeline))
     (set! (pipeline-program pipeline) program)
     (set! (pipeline-attributes pipeline)
           (map attribute-location (pipeline-attributes pipeline)))
     (set! (pipeline-uniforms pipeline)
           (map uniform-location (pipeline-uniforms pipeline)))))
+
+(define (compile-pipelines)
+  (for-each compile-pipeline *pipelines*))
+
+(define (delete-shader shader)
+  (gl:delete-shader (shader-program shader))
+  (set! (shader-program shader) 0)
+  (hash-table-delete! *compiled-shaders* (shader-id shader)))
+
+(define (delete-pipeline pipeline)
+  (gl:delete-program (pipeline-program pipeline))
+  (delete! pipeline *pipelines*))
 
 ) ; module end

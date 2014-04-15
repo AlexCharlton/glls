@@ -25,7 +25,6 @@
   (cadr (pipeline-shaders foo)))
 
 (glfw:with-window (640 480 "Example" resizable: #f)
-   (compile-pipeline foo)
-   (compile-pipeline baz)
+   (compile-pipelines)
    (print foo)
    (print baz))
