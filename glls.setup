@@ -1,0 +1,11 @@
+;; glls.setup -*- scheme -*-
+
+(compile -d0 -O2 -J -s glls-compiler.scm)
+(compile -d0 -O2 -s glls-compiler.import.scm)
+(compile -d0 -O2 -J -s glls.scm)
+(compile -d0 -O2 -s glls.import.scm)
+
+(install-extension
+ 'glls
+ '("glls.so" "glls.import.so" "glls-compiler.so" "glls-compiler.import.so")
+ '((version "0.0.1")))

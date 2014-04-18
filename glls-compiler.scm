@@ -1,8 +1,9 @@
-;;;; compiler.scm
+;;;; glls-compiler.scm
 ;;;;
-;;;; Functions responsible for taking scheme-glsl forms and transforming them into glsl
+;;;; Functions responsible for taking glls forms and transforming them into GLSL
+
 (module glsl-compiler
-  (compile-glsl
+  (compile-glls
    symbol->glsl
    compile-expr
    compile-inputs
@@ -32,16 +33,16 @@
            (shader-program s)))
 
 (define (create-shader form #!key [inputs '()])
-  (let-values ([(s i o u) (compile-glsl form inputs: inputs)])
+  (let-values ([(s i o u) (compile-glls form inputs: inputs)])
     (make-shader (car form) (gensym "shader") s i o u 0)))
 
 ;;; Main compiling function
-;; Takes a form with the scheme-glsl syntax and returns values:
-;; - The glsl string
+;; Takes a form with the glls syntax and returns values:
+;; - The GLSL string
 ;; - A list of the inputs (string-name symbol-type)
 ;; - A list of the outputs (string-name symbol-type)
 ;; - A list of the uniforms (string-name symbol-type)
-(define (compile-glsl form #!key [inputs '()])
+(define (compile-glls form #!key [inputs '()])
   (define (shader-type? s) (member s '(#:vertex #:fragment #:geometry)))
   (match form
     [((? shader-type? shader-type) input body -> output)
@@ -73,7 +74,7 @@
                      (cons (symbol->glsl (car u))
                            (cadr u))))))
 
-;; Given a scheme-glsl expression, return the glsl string
+;; Given a glls expression, return the GLSL string
 (define compile-expr
   (match-lambda
    [(? special-fun? expr) ((hash-table-ref *special-functions* (first expr))

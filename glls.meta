@@ -1,4 +1,4 @@
-;; glsl.meta -*- scheme -*-
+;; glls.meta -*- scheme -*-
 
 ((synopsis "A compiler for a Scheme-like language targeting the GLSL")
  (author "Alex Charlton")

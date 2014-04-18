@@ -1,3 +1,0 @@
-(repo git "git://github.com/AlexCharlton/chicken-{egg-name}.git")
-(uri targz "https://codeload.github.com/AlexCharlton/chicken-{egg-name}/tar.gz/{egg-release}")
-(release "0.1.0")

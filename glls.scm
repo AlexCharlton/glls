@@ -1,16 +1,16 @@
-;;;; glsl.scm
+;;;; glls.scm
 ;;;;
 ;;;; Methods and macros for defining, compiling, and deleting shaders and pipelines.
 ;;;; Pipelines are the name that we are using to refer to OpenGL "programs"
 ;;;; which is an unfortunately vague term.
 
-(module glsl
+(module glls
   (make-pipeline
    pipeline-shaders
    pipeline-attributes
    pipeline-uniforms
    create-pipeline
-   *pipelines*
+   pipelines
    defpipeline
    defshader
    compile-shader
@@ -20,13 +20,13 @@
    delete-pipeline)
 
 (import chicken scheme srfi-69 srfi-1 miscmacros)
-(use glsl-compiler (prefix opengl-glew gl:) matchable)
-(import-for-syntax glsl-compiler)
+(use glls-compiler (prefix opengl-glew gl:) matchable)
+(import-for-syntax glls-compiler)
 
-(reexport glsl-compiler)
+(reexport glls-compiler)
 
 (begin-for-syntax
- (require-library glsl-compiler))
+ (require-library glls-compiler))
 
 (define-record pipeline
   shaders (setter attributes) (setter uniforms) (setter program))
@@ -44,7 +44,7 @@
   (syntax-rules ()
     ((_ forms ...)
       (begin
-        (begin-for-syntax (require-library glsl) forms ...)
+        (begin-for-syntax (require-library glls) forms ...)
         forms ...))))
 
 (define-syntax defshader
@@ -59,6 +59,10 @@
                            0)])
        `(,(rename 'begin-also-for-syntax)
          (,(rename 'define) ,name ,shader-maker))))))
+
+(begin-for-syntax
+ (define pipelines (make-parameter '())))
+(define pipelines (make-parameter '()))
 
 (define (create-pipeline . shaders)
   (if (< (length shaders) 2)
@@ -75,12 +79,10 @@
                                  (filter (lambda (s)
                                            (equal? (shader-type s) #:vertex))
                                          shaders)))]
-         [uniforms (apply append (map shader-uniforms shaders))])
-    (make-pipeline shaders attributes uniforms 0)))
-
-(begin-for-syntax
- (define *pipelines* '()))
-(define *pipelines* '())
+         [uniforms (apply append (map shader-uniforms shaders))]
+         [pipeline (make-pipeline shaders attributes uniforms 0)])
+    (pipelines (cons pipeline (pipelines)))
+    pipeline))
 
 (define-syntax defpipeline
   (er-macro-transformer
@@ -112,8 +114,8 @@
           (,(rename 'make-pipeline) (,(rename 'list) ,@shader-makers)
            ',attributes ',uniforms
            0))
-         (,(rename 'set!) ,(rename '*pipelines*)
-          (,(rename 'cons) ,name ,(rename '*pipelines*))))))))
+         (,(rename 'pipelines)
+          (,(rename 'cons) ,name (,(rename 'pipelines)))))))))
 
 
 ;;; GL compiling
@@ -158,7 +160,7 @@
           (map uniform-location (pipeline-uniforms pipeline)))))
 
 (define (compile-pipelines)
-  (for-each compile-pipeline *pipelines*))
+  (for-each compile-pipeline (pipelines)))
 
 (define (delete-shader shader)
   (gl:delete-shader (shader-program shader))
@@ -167,6 +169,7 @@
 
 (define (delete-pipeline pipeline)
   (gl:delete-program (pipeline-program pipeline))
-  (delete! pipeline *pipelines*))
+  (set! (pipeline-program pipeline) 0)
+  (delete! pipeline (pipelines)))
 
 ) ; module end
