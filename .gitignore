@@ -3,4 +3,5 @@
 *.so
 *.c
 *.o
+README.svnwiki
 example
