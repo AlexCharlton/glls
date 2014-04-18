@@ -13,7 +13,7 @@
    *pipelines*
    defpipeline
    defshader
-   gl-compile-shader
+   compile-shader
    compile-pipeline
    compile-pipelines
    delete-shader
@@ -119,7 +119,7 @@
 ;;; GL compiling
 (define *compiled-shaders* (make-hash-table))
 
-(define (gl-compile-shader shader)
+(define (compile-shader shader)
   (define (shader-int-type shader)
     (ecase (shader-type shader)
            [(vertex:) gl:+vertex-shader+]
@@ -136,7 +136,7 @@
            s))))
 
 (define (compile-pipeline pipeline)
-  (for-each gl-compile-shader (pipeline-shaders pipeline))
+  (for-each compile-shader (pipeline-shaders pipeline))
   (let* ([program (gl:make-program (map shader-program (pipeline-shaders pipeline)))]
          [attribute-location
           (lambda (a)

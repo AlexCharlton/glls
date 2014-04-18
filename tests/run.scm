@@ -44,7 +44,7 @@
         (compile-inputs '((foo #:vec3) (bar #:vec3) #:uniform (baz (#:array #:int)))
                         '((quox #:mat4))))
   (test "#version 330\n\nin vec2 vertex;\nin vec3 color;\nout vec3 c;\nuniform mat4 viewMatrix;\n\nvoid  main(){\ngl_Position = (viewMatrix * vec4(vertex, 0.0, 1.0));\nc = color;\n}\n\n"
-        (compile-shader
+        (compile-glsl
          '(#:vertex ((vertex #:vec2) (color #:vec3) #:uniform (view-matrix #:mat4))
                     (define (main) #:void
                       (set! gl:position (* view-matrix (vec4 vertex 0.0 1.0)))
