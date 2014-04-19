@@ -2,7 +2,7 @@
 ;;;;
 ;;;; Functions responsible for taking glls forms and transforming them into GLSL
 
-(module glsl-compiler
+(module glls-compiler
   (compile-glls
    symbol->glsl
    compile-expr

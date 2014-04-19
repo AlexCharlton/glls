@@ -1,6 +1,6 @@
 (import chicken scheme)
 
-(use glsl (prefix glfw3 glfw:) (prefix opengl-glew gl:))
+(use glls (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
 (defpipeline foo 
   (#:vertex ((vertex #:vec2) (color #:vec3) #:uniform (view-matrix #:mat4))
@@ -27,4 +27,6 @@
 (glfw:with-window (640 480 "Example" resizable: #f)
    (compile-pipelines)
    (print foo)
-   (print baz))
+   (print baz)
+   (gl:use-program (pipeline-program foo))
+   (delete-pipeline foo))
