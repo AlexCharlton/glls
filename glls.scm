@@ -9,6 +9,7 @@
    pipeline-shaders
    pipeline-attributes
    pipeline-uniforms
+   pipeline-program
    create-pipeline
    pipelines
    defpipeline
