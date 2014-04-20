@@ -92,8 +92,8 @@
          t)))
 
 (define (symbol->glsl sym)
-  (define cammel-case
-    (irregex-replace/all "[:-](.)" (symbol->string sym)
+  (define (cammel-case str)
+    (irregex-replace/all "[:-](.)" str
                          (lambda (m)
                            (let* ([s (irregex-match-substring m)]
                                   [char1 (string-ref s 0)]
@@ -101,12 +101,19 @@
                              (if (equal? char1 #\:)
                                  (string #\_ char2)
                                  (string char2))))))
-  (define dimensions
-    (irregex-replace/all "[1-3]d" cammel-case
+  (define (dimensions str)
+    (irregex-replace/all "[1-3]d" str
                          (lambda (m) (let* ([s (irregex-match-substring m)]
                                        [char1 (string-ref s 0)])
                                   (string char1 #\D)))))
-  (string->symbol (irregex-replace/all "DMs" dimensions "DMS")))
+  (define (multi-sample str)
+    (irregex-replace/all "DMs" str "DMS"))
+  (define (all sym)
+    (string->symbol (multi-sample (dimensions (cammel-case (symbol->string sym))))))
+  (case sym
+    [(emit-vertex) 'EmitVertex]
+    [(end-primitive) 'EndPrimitive]
+    [else (all sym)]))
 
 (define (replace symbol)
   (lambda (x . rest)

@@ -2,7 +2,11 @@
 
 (test-group "renaming"
   (test 'gl_Position (symbol->glsl 'gl:position))
-  (test 'floatBitsToUint (symbol->glsl 'float-bits-to-uint)))
+  (test 'floatBitsToUint (symbol->glsl 'float-bits-to-uint))
+  (test 'shadow2DProjLod (symbol->glsl 'shadow-2d-proj-lod))
+  (test 'sampler2DMSArray (symbol->glsl 'sampler-2d-ms-array))
+  (test 'EmitVertex (symbol->glsl 'emit-vertex))
+  (test 'EndPrimitive (symbol->glsl 'end-primitive)))
 
 (test-group "expressions"
   (test "vec4(position, 0.0, 1.0);\n" (compile-expr '(vec4 position 0.0 1.0)))
