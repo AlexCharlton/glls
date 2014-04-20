@@ -126,8 +126,11 @@
   (define (shader-int-type shader)
     (ecase (shader-type shader)
            [(vertex:) gl:+vertex-shader+]
+           [(tess-control:) gl:+tess-control-shader+]
+           [(tess-evaluation:) gl:+tess-evaluation-shader+]
+           [(geometry:) gl:+geometry-shader+]
            [(fragment:) gl:+fragment-shader+]
-           [(geometry:) gl:+geometry-shader+]))
+           [(compute:) gl:+compute-shader+]))
   (if* (hash-table-ref/default *compiled-shaders* (shader-id shader) #f)
        (begin
          (set! (shader-program shader) it)

@@ -34,6 +34,9 @@
   (let-values ([(s i o u) (compile-glls form inputs: inputs)])
     (make-shader (car form) (gensym "shader") s i o u 0)))
 
+(define shader-types
+  '(#:vertex #:fragment #:geometry #:tess-control #:tess-evaluation #:compute))
+
 ;;; Main compiling function
 ;; Takes a form with the glls syntax and returns values:
 ;; - The GLSL string
@@ -41,7 +44,7 @@
 ;; - A list of the outputs (string-name symbol-type)
 ;; - A list of the uniforms (string-name symbol-type)
 (define (compile-glls form #!key [inputs '()])
-  (define (shader-type? s) (member s '(#:vertex #:fragment #:geometry)))
+  (define (shader-type? s) (member s shader-types))
   (match form
     [((? shader-type? shader-type) input body -> output)
      (let-values ([(sl in out uni) (compile-inputs (append inputs input) output)])
