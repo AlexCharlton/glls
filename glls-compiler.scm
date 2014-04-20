@@ -45,12 +45,16 @@
 ;; - A list of the uniforms (string-name symbol-type)
 (define (compile-glls form #!key [inputs '()])
   (define (shader-type? s) (member s shader-types))
+  (define (compile type input body output #!optional [version 330])
+    (let-values ([(sl in out uni) (compile-inputs (append inputs input) output)])
+      (values (string-append  "#version " (number->string version) "\n\n"
+                              (fmt #f (c-expr `(%begin ,@sl ,(glsl->fmt body)))))
+              in out uni)))
   (match form
     [((? shader-type? shader-type) input body -> output)
-     (let-values ([(sl in out uni) (compile-inputs (append inputs input) output)])
-       (values (string-append  "#version 330\n\n"
-                               (fmt #f (c-expr `(%begin ,@sl ,(glsl->fmt body)))))
-               in out uni))]
+     (compile shader-type input body output)]
+    [((? shader-type? shader-type) (? integer? version) input body -> output)
+     (compile shader-type input body output version)]
     [_ (syntax-error "Poorly formed shader:" form)]))
 
 (define (prn x) (newline) (newline) (print x) (newline) x)
