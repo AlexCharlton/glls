@@ -24,9 +24,17 @@
   bar
   (cadr (pipeline-shaders foo)))
 
+(define quox 
+  (create-pipeline
+   bar
+   '(#:fragment ((c #:vec3))
+               (define (main) #:void
+                 (set! frag-color (vec4 c 1.0)))
+               -> ((frag-color #:vec4)))))
+
 (glfw:with-window (640 480 "Example" resizable: #f)
    (compile-pipelines)
    (print foo)
    (print baz)
-   (gl:use-program (pipeline-program foo))
-   (delete-pipeline foo))
+   (print quox)
+   (gl:use-program (pipeline-program foo)))
