@@ -6,33 +6,33 @@
   (compile-glls
    symbol->glsl
    compile-expr
+   shader?
    shader-type
-   shader-id
    shader-source
    shader-inputs
    shader-outputs
    shader-uniforms
    shader-program
    make-shader
-   create-shader)
+   %create-shader)
 
-(import chicken scheme data-structures srfi-1 srfi-69 irregex)
+(import chicken scheme data-structures srfi-1 srfi-69)
 
-(use fmt fmt-c matchable srfi-42 miscmacros)
+(use fmt fmt-c matchable srfi-42 miscmacros irregex)
 
 ;;; Shader record
 (define-record shader
-  type id source inputs outputs uniforms (setter program))
+  type source inputs outputs uniforms (setter program))
 
 (define-record-printer (shader s out)
-  (fprintf out "#,(shader ~S '~S ~S '~S '~S '~S ~S)"
-           (shader-type s) (shader-id s) (shader-source s)
+  (fprintf out "#,(shader ~S ~S '~S '~S '~S ~S)"
+           (shader-type s)  (shader-source s)
            (shader-inputs s) (shader-outputs s) (shader-uniforms s)
            (shader-program s)))
 
-(define (create-shader form #!key [inputs '()])
+(define (%create-shader form #!key [inputs '()])
   (let-values ([(s i o u) (compile-glls form inputs: inputs)])
-    (make-shader (car form) (gensym "shader") s i o u 0)))
+    (make-shader (car form) s i o u 0)))
 
 (define shader-types
   '(#:vertex #:fragment #:geometry #:tess-control #:tess-evaluation #:compute))
