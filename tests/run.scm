@@ -37,30 +37,31 @@
         (compile-expr '(define (foo (x (in: #:int)) (y #:int)) #:vec3
                   (set! x y)
                   bar)))
-  (test "for (i = 0; (< i 5); ++i) {\n    foo(i);\n}\n"
-        (compile-expr '(dotimes (i 5)
+  (test "for (int i = 0; (< i 5); ++i) {\n    foo(i);\n}\n"
+        (compile-expr '(do-times (i 5)
                                 (foo i))))
   (test "while ((< i 4)) {\n    if (thing) {\n        break;\n    }\n    foo(i);\n}\n"
         (compile-expr '(while (< i 4)
                          (if thing (break))
                          (foo i))))
-  (test  "#version 330\n\nin vec2 vertex;\nin vec3 color;\nout vec3 c;\nuniform mat4 viewMatrix;\nvoid main () {\n    gl_Position = viewMatrix * vec4(vertex, 0.0, 1.0);\n    c = color;\n}\n"
+  (test  "#version 410\n\nin vec2 vertex;\nin vec3 color;\nout vec3 c;\nuniform mat4 viewMatrix;\nvoid main () {\n    gl_Position = viewMatrix * vec4(vertex, 0.0, 1.0);\n    c = color;\n}\n"
         (compile-glls
-         '(#:vertex ((vertex #:vec2) (color #:vec3) #:uniform (view-matrix #:mat4))
-                    (define (main) #:void
-                      (set! gl:position (* view-matrix (vec4 vertex 0.0 1.0)))
-                      (set! c color))
-                    -> ((c #:vec3)))))
+         '((#:vertex version: 410)
+                   ((vertex #:vec2) (color #:vec3) #:uniform (view-matrix #:mat4))
+              (define (main) #:void
+                (set! gl:position (* view-matrix (vec4 vertex 0.0 1.0)))
+                (set! c color))
+              -> ((c #:vec3)))))
   (test-error (compile-expr '(let ((foo (#:array #:int 4) (1 2))))))
 
   (test "vec4(position, 0.0, 1.0);\n"
         (compile-expr '(vec4 position 0.0 1.0)))
-  (test "for (i = 2; (< i 4); ++i) {\n    break;\n}\n"
-        (compile-expr '(dotimes (i 2 4) (break))))
+  (test "for (int i = 2; (< i 4); ++i) {\n    break;\n}\n"
+        (compile-expr '(do-times (i 2 4) (break))))
   (test "for (i = 0; (< i 4); ++i) {\n    break;\n}\n"
         (compile-expr '(for (set! i 0) (< i 4) (++ i) (break))))
   (test "struct name {\n    int x;\n    int y[];\n};\n"
-        (compile-expr '(record foo (x int) (y (array: int)))))
+        (compile-expr '(define-record foo (x int) (y (array: int)))))
   (test "int x = 4;\nint y;\ny = 1;\nx + y;\n"
         (compile-expr '(let ((x int 4) (y int)) (set! y 1) (+ x y))))
   (test "int x = 4;\nx + 1;\n"
