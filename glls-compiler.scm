@@ -173,12 +173,13 @@
     `(struct name ,(map parameter fields))]
    [expr (syntax-error 'struct "Poorly formed:" expr)]))
 
-(define glsl:dotimes
+(define glsl:do-times
   (match-lambda*
    [(_ (var end) body . body-rest)
-    `(for (= ,var 0) (< ,var ,end) (++ ,var) ,body . ,body-rest)]
+    `(for (%var int ,var 0) (< ,var ,end) (++ ,var) ,body . ,body-rest)]
    [(_ (var start end) body . body-rest)
-    `(for (= ,var ,start) (< ,var ,end) (++ ,var) ,body . ,body-rest)]))
+    `(for (%var int ,var ,start) (< ,var ,end) (++ ,var) ,body . ,body-rest)]
+   [expr (syntax-error 'do-times "Poorly formed:" expr)]))
 
 (define *special-functions*
   (alist->hash-table
@@ -205,6 +206,6 @@
      (let* . ,glsl:let)
      (define-record . ,glsl:struct)
      (struct . ,glsl:struct)
-     (dotimes . ,glsl:dotimes))))
+     (do-times . ,glsl:do-times))))
 
 ) ; end module
