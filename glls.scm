@@ -155,14 +155,16 @@
            [attribute-location
             (lambda (a)
               (match-let* ([(name . type) a]
-                           [location (gl:get-attrib-location program
-                                                             (symbol->string name))])
+                           [location (gl:get-attrib-location
+                                      program
+                                      (symbol->string (symbol->glsl name)))])
                           (list name location type)))]
            [uniform-location
             (lambda (u)
               (match-let* ([(name . type) u]
-                           [location (gl:get-uniform-location program
-                                                              (symbol->string name))])
+                           [location (gl:get-uniform-location
+                                      program
+                                      (symbol->string (symbol->glsl name)))])
                           (list name location type)))])
       (for-each (lambda (s)
                   (gl:detach-shader program (shader-program s)))
