@@ -65,7 +65,7 @@
                        `(%var ,(list type t) ,name))))
   (define (name-type p)
     (list-ec (: i p)
-             (cons (symbol->glsl (car i))
+             (cons (car i)
                    (cadr i))))
   (let* ([uniforms (if* (member #:uniform in)
                         it
