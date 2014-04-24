@@ -32,7 +32,7 @@
 
 (define (%create-shader form #!key [inputs '()])
   (let-values ([(s i o u) (compile-glls form inputs: inputs)])
-    (make-shader (car form) s i o u 0)))
+    (make-shader (caar form) s i o u 0)))
 
 (define shader-types
   '(#:vertex #:fragment #:geometry #:tess-control #:tess-evaluation #:compute))
@@ -45,16 +45,21 @@
 ;; - A list of the uniforms (string-name symbol-type)
 (define (compile-glls form #!key [inputs '()])
   (define (shader-type? s) (member s shader-types))
-  (define (compile type input body output #!optional [version 330])
+  (define (compile type input body output
+                   #!key [version 330] [extensions '()] [pragmas '()])
     (let-values ([(sl in out uni) (compile-inputs (append inputs input) output)])
-      (values (string-append  "#version " (number->string version) "\n\n"
-                              (fmt #f (c-expr `(%begin ,@sl ,(glsl->fmt body)))))
+      (values (fmt #f "#version " (number->string version) "\n\n"
+                   (fmt-join dsp
+                          (list-ec (: e extensions)
+                                   (fmt #f "#extension " e  #\newline)))
+                   (fmt-join dsp
+                             (list-ec (: p pragmas)
+                                      (fmt #f "#pragma " p #\newline)))
+                   (c-expr `(%begin ,@sl ,(glsl->fmt body))))
               in out uni)))
   (match form
-    [((? shader-type? shader-type) input body -> output)
-     (compile shader-type input body output)]
-    [((? shader-type? shader-type) (? integer? version) input body -> output)
-     (compile shader-type input body output version)]
+    [(((? shader-type? shader-type) . keys) input body -> output)
+     (apply compile shader-type input body output keys)]
     [_ (syntax-error "Poorly formed shader:" form)]))
 
 (define (prn x) (newline) (newline) (print x) (newline) x)
