@@ -64,6 +64,14 @@ Compile (in OpenGL) the `PIPELINE` and sets its `PROGRAM` slot to the OpenGL pro
 
 Compile (as per `compile-pipeline`) all the pipelines defined by `defpipeline` and `create-pipeline`. Must be called while there is an active OpenGL context.
 
+    [procedure] (pipeline-uniform UNIFORM PIPELINE)
+
+Return the location of `UNIFORM`. The `PIPELINE` must be compiled before this function can be used.
+
+    [procedure] (pipeline-attribute ATTRIBUTE PIPELINE)
+
+Return the location of `ATTRIBUTE`. The `PIPELINE` must be compiled before this function can be used.
+
 
 ### The glls shader language
 #### Shader syntax
