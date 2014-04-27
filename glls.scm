@@ -18,6 +18,8 @@
    compile-shader
    compile-pipeline
    compile-pipelines
+   pipeline-uniform
+   pipeline-attribute
    %delete-shader
    %delete-pipeline)
 
@@ -176,5 +178,22 @@
 (define (compile-pipelines)
   (for-each compile-pipeline (pipelines))
   (pipelines '()))
+
+;; Accessors
+(define (pipeline-uniform uniform pipeline)
+  (let ([u (assoc uniform (pipeline-uniforms pipeline))])
+    (unless u
+      (error 'pipeline-uniform "No such uniform" uniform))
+    (when (< (length u) 3)
+      (error 'pipeline-uniform "Pipeline has not been compiled" pipeline))
+    (cadr u)))
+
+(define (pipeline-attribute attr pipeline)
+  (let ([a (assoc attr (pipeline-attributes pipeline))])
+    (unless a
+      (error 'pipeline-attribute "No such attribute" attr))
+    (when (< (length a) 3)
+      (error 'pipeline-attribute "Pipeline has not been compiled" pipeline))
+    (cadr a)))
 
 ) ; module end
