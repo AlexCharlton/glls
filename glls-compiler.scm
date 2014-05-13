@@ -170,7 +170,7 @@
 (define glsl:struct
   (match-lambda*
    [(_ name . fields)
-    `(struct name ,(map parameter fields))]
+    `(struct ,name ,(map parameter fields))]
    [expr (syntax-error 'struct "Poorly formed:" expr)]))
 
 (define glsl:do-times
