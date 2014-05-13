@@ -37,6 +37,8 @@
 (define shader-types
   '(#:vertex #:fragment #:geometry #:tess-control #:tess-evaluation #:compute))
 
+(define glsl-version (make-parameter 330))
+
 ;;; Main compiling function
 ;; Takes a form with the glls syntax and returns values:
 ;; - The GLSL string
@@ -46,7 +48,7 @@
 (define (compile-glls form #!key [inputs '()])
   (define (shader-type? s) (member s shader-types))
   (define (compile type input body output
-                   #!key [version 330] [extensions '()] [pragmas '()])
+                   #!key [version (glsl-version)] [extensions '()] [pragmas '()])
     (let-values ([(sl in out uni) (compile-inputs (append inputs input) output)])
       (values (fmt #f "#version " (number->string version) "\n\n"
                    (fmt-join dsp
