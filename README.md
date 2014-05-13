@@ -19,6 +19,10 @@ It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/e
 * srfi-42
 
 ## Documentation
+    [parameter] glsl-version
+
+The default GLSL version used by shaders. Defaults to `330`.
+
 ### Shaders
     [record] (shader TYPE SOURCE INPUTS OUTPUTS UNIFORMS PROGRAM)
 
@@ -81,7 +85,7 @@ The shaders of glls – the forms that `defshader`, `defpipeline`, etc. expect �
 
 `type` is the keyword type of the shader. It must be one of `#:vertex`, `#:fragment`, `#:geometry`, `#:tess-control`, `#:tess-evaluation`, or `#:compute`.
 
-`version` is the integer version number of the shader, i.e. the number you would write at the top of the shader source (e.g. `#version 410`). Defaults to `330`.
+`version` is the integer version number of the shader, i.e. the number you would write at the top of the shader source (e.g. `#version 410`). Defaults to the `glsl-version` parameter.
 
 `extensions` is the list of GLSL extensions desired (in string form). E.g. `'("GL_EXT_gpu_shader4 : enable")`. Defaults to `'()`
 
@@ -96,8 +100,7 @@ The shaders of glls – the forms that `defshader`, `defpipeline`, etc. expect �
 #### Shader Lisp
 For the most part, the Lisp used to define glls shaders looks like Scheme with one notable difference: types must be specified whenever a variable or function is defined. Under the hood, forms are being passed to [fmt](https://wiki.call-cc.org/eggref/4/fmt#c-as-s-expressions), so everything that you can do there will work in glls. Details of the Lisp used for shaders is provided in the following sections.
 
-
-It should be possible to do anything in glls that you would want to do with the GLSL. Known exceptions to this is are: layout qualifiers (which I don’t feel are terribly relevant in the context of Scheme), do-while loops (which have no Scheme analog), `#error`, `#line`, `#undef` (implementation reasons). Let me know if there are any features that you find lacking.
+It should be possible to do almost anything in glls that you would want to do with the GLSL. Known exceptions to this is are: layout qualifiers (which I don’t feel are terribly relevant in the context of Scheme, at least not until uniform locations become prevalent), do-while loops (which have no Scheme analog), `#error`, `#line`, `#undef`, and struct uniforms (implementation reasons). Let me know if there are any features that you find lacking.
 
 Keep in mind, however, that glls cannot do anything that the GLSL can’t, such as making anonymous or recursive functions.
 
@@ -117,6 +120,7 @@ GLSL functions and operators are all called like normal Lisp functions. In almos
 The following is a mapping between glls aliases for GLSL functions and operators:
 
 * `modulo`: `%`
+* `expt`: `pow`
 * `equal?`, `eqv?`, `eq`, `=`: `==`
 * `set!`: `=`
 * `and`: `&&`
@@ -148,7 +152,7 @@ Defines the function `name`. The last expression in the body of a non-void funct
 
 Defines the supplied variables. Note that, unlike Scheme, the variables created will continue to exist outside of the `let` (until the extent of whatever lexical scope the `let` exists within) and they therefore do not exist within their own scope. Note also that variables defined in `let` are within the scope of variables that are subsequently defined in the same `let` (i.e. `let` functions like `let*` in Scheme, and in fact `let*` may be used if preferred).
 
-    (define-record <name> (<field> <type>) ...)
+    (define-record <name> (<type> <field>) ...)
 
 Defines the struct `name`.
 
@@ -193,7 +197,7 @@ The following forms can be used to add pre-processor directives:
     (%ifndef <value> <true> [<false>])
 
 ## Examples
-These examples depends on the [glfw3](http://wiki.call-cc.org/eggref/4/glfw3) egg for window and context creation.
+These examples depends on the [glfw3](http://wiki.call-cc.org/eggref/4/glfw3) egg for window and context creation. The examples presented here illustrate only very basic shader definition and loading. For more complete examples, see the [examples directory](https://github.com/AlexCharlton/glls/tree/master/examples) of the source.
 
 Aside from knowing how to write glls shaders, only one macro, one function, and one record is necessary to use glls: `defpipeline`, `compile-pipelines`, and the record `pipeline`. This example illustrates this minimal pipeline creation
 
