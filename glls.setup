@@ -8,4 +8,4 @@
 (install-extension
  'glls
  '("glls.so" "glls.import.so" "glls-compiler.so" "glls-compiler.import.so")
- '((version "0.0.1")))
+ '((version "0.1.0")))
