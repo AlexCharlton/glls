@@ -5,3 +5,5 @@
 *.o
 README.svnwiki
 example
+/examples/complete
+/examples/simple
