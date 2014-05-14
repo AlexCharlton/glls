@@ -49,7 +49,8 @@
   (define (shader-type? s) (member s shader-types))
   (define (compile type input body output
                    #!key [version (glsl-version)] [extensions '()] [pragmas '()])
-    (let-values ([(sl in out uni) (compile-inputs (append inputs input) output)])
+    (let-values ([(sl in out uni) (compile-inputs (append inputs input) output
+                                                  version type)])
       (values (fmt #f "#version " (number->string version) "\n\n"
                    (fmt-join dsp
                           (list-ec (: e extensions)
@@ -64,12 +65,17 @@
      (apply compile shader-type input body output keys)]
     [_ (syntax-error "Poorly formed shader:" form)]))
 
-(define (prn x) (newline) (newline) (print x) (newline) x)
-
-(define (compile-inputs in out)
+(define (compile-inputs in out version shader-type)
+  (define (in/out-type->glsl-type type)
+    (cond
+     [(or (>= version 330)
+         (equal? type 'uniform)) type]
+     [(and (equal? shader-type #:vertex)
+         (equal? type 'in)) 'attribute]
+     [else 'varrying]))
   (define (params p type)
     (list-ec (: i p) (match-let ([(t name) (glsl->fmt (parameter i))])
-                       `(%var ,(list type t) ,name))))
+                       `(%var ,(list (in/out-type->glsl-type type) t) ,name))))
   (define (name-type p)
     (list-ec (: i p)
              (cons (car i)

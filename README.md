@@ -1,5 +1,5 @@
 # glls
-glls (GL Lisp Shaders) lets you write [GLSL](https://www.opengl.org/documentation/glsl/) (OpenGL Shader Language) shaders in a convenient pseudo-scheme language in Chicken Scheme. The compilation into GLSL happens at compile-time for zero runtime cost. glls targets only GLLS version 3.30 and above, at the moment.
+glls (GL Lisp Shaders) lets you write [GLSL](https://www.opengl.org/documentation/glsl/) (OpenGL Shader Language) shaders in a convenient pseudo-scheme language in Chicken Scheme. The compilation into GLSL happens at compile-time for zero runtime cost.
 
 The idea for glls was hugely inspired by [Varjo](https://github.com/cbaggers/varjo). Before learning about Varjo, I had never considered the possibility of writing shaders in anything but the GLSL. Seeing them being written in Lisp was a major, "Of course!" moment.
 

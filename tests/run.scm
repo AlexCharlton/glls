@@ -44,14 +44,7 @@
         (compile-expr '(while (< i 4)
                          (if thing (break))
                          (foo i))))
-  (test  "#version 410\n\nin vec2 vertex;\nin vec3 color;\nout vec3 c;\nuniform mat4 viewMatrix;\nvoid main () {\n    gl_Position = viewMatrix * vec4(vertex, 0.0, 1.0);\n    c = color;\n}\n"
-        (compile-glls
-         '((#:vertex version: 410)
-                   ((vertex #:vec2) (color #:vec3) #:uniform (view-matrix #:mat4))
-              (define (main) #:void
-                (set! gl:position (* view-matrix (vec4 vertex 0.0 1.0)))
-                (set! c color))
-              -> ((c #:vec3)))))
+  
   (test-error (compile-expr '(let ((foo (#:array #:int 4) (1 2))))))
 
   (test "vec4(position, 0.0, 1.0);\n"
@@ -73,6 +66,28 @@
   (test "int foo () {\n    return 5;\n}\n"
         (compile-expr '(define (foo) int 5)))
   (test "int foo[5] = {1, 2, 3, 4, 5};\n"
-        (compile-expr '(define foo (array: int 5) #(1 2 3 4 5)))))
+        (compile-expr '(define foo (array: int 5) #(1 2 3 4 5))))
+  (test  "#version 410\n\nin vec2 vertex;\nin vec3 color;\nout vec3 c;\nuniform mat4 viewMatrix;\nvoid main () {\n    gl_Position = viewMatrix * vec4(vertex, 0.0, 1.0);\n    c = color;\n}\n"
+         (compile-glls
+          '((#:vertex version: 410)
+            ((vertex #:vec2) (color #:vec3) #:uniform (view-matrix #:mat4))
+            (define (main) #:void
+              (set! gl:position (* view-matrix (vec4 vertex 0.0 1.0)))
+              (set! c color))
+            -> ((c #:vec3)))))
+  (test  "#version 130\n\nattribute vec2 vertex;\nattribute vec3 color;\nvarrying vec3 c;\nuniform mat4 viewMatrix;\nvoid main () {\n    gl_Position = viewMatrix * vec4(vertex, 0.0, 1.0);\n    c = color;\n}\n"
+         (compile-glls
+          '((#:vertex version: 130)
+            ((vertex #:vec2) (color #:vec3) #:uniform (view-matrix #:mat4))
+            (define (main) #:void
+              (set! gl:position (* view-matrix (vec4 vertex 0.0 1.0)))
+              (set! c color))
+            -> ((c #:vec3)))))
+  (test "#version 130\n\nvarrying vec3 c;\nvoid main () {\n    gl_FragColor = vec4(c, 1.0);\n}\n"
+        (compile-glls '((#:fragment #:version 130) ((c #:vec3))
+                        (define (main) #:void
+                          (set! gl:frag-color (vec4 c 1.0)))
+                        -> ())))
+  ); end test-group "expressions"
 
 (test-exit)
