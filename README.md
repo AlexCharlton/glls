@@ -1,5 +1,5 @@
 # glls
-glls (GL Lisp Shaders) lets you write [GLSL](https://www.opengl.org/documentation/glsl/) (OpenGL Shader Language) shaders in a convenient pseudo-scheme language in Chicken Scheme. The compilation into GLSL happens at compile-time for zero runtime cost.
+glls (GL Lisp Shaders) lets you write [GLSL](https://www.opengl.org/documentation/glsl/) (OpenGL Shader Language) shaders in a convenient pseudo-scheme language in Chicken Scheme. The compilation into GLSL happens at compile-time for zero run-time cost. Run-time compilation is also supported. To those that want to dynamically construct shaders: I solute you.
 
 The idea for glls was hugely inspired by [Varjo](https://github.com/cbaggers/varjo). Before learning about Varjo, I had never considered the possibility of writing shaders in anything but the GLSL. Seeing them being written in Lisp was a major, "Of course!" moment.
 
@@ -12,7 +12,6 @@ It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/e
 
 ## Requirements
 * fmt
-* fmt-c
 * matchable
 * miscmacros
 * opengl-glew
@@ -26,7 +25,7 @@ The default GLSL version used by shaders. Defaults to `330`.
 ### Shaders
     [record] (shader TYPE SOURCE INPUTS OUTPUTS UNIFORMS PROGRAM)
 
-Used to represent shaders. Returned by `defshader` and `create-shader`. It should not be necessary to access the slots of this record.
+Used to represent shaders. Returned by `defshader` and `create-shader`. It should not typically be necessary to access the slots of this record.
 
     [macro] (defshader NAME GLLS-SHADER)
 
@@ -50,7 +49,7 @@ Compile (in OpenGL) `SHADER`. Nothing is done if the shader has already been com
 
     [record] (pipeline SHADERS ATTRIBUTES UNIFORMS PROGRAM)
 
-Created with `defpipeline` or `create-pipeline`, contains the data needed for a pipeline. `SHADERS` is the list of shader records. `ATTRIBUTES` and `UNIFORMS` are lists of the attributes and uniforms of the shader, specified as (name . type) pairs before compilation (with `compile-pipeline` or `compile-pipelines`) and (name location type) lists after compilation. `PROGRAM` is the GL ID of the program (always 0 before compilation).
+Created with `defpipeline` or `create-pipeline`, contains the data needed for a pipeline. `SHADERS` is the list of shader records. `ATTRIBUTES` and `UNIFORMS` are lists of the attributes and uniforms of the shader, specified as `(name . type)` pairs before compilation (with `compile-pipeline` or `compile-pipelines`) and `(name location type)` lists after compilation. `PROGRAM` is the GL ID of the program (always 0 before compilation).
 
     [macro] (defpipeline NAME . SHADERS)
 
@@ -102,7 +101,7 @@ For the most part, the Lisp used to define glls shaders looks like Scheme with o
 
 It should be possible to do almost anything in glls that you would want to do with the GLSL. Known exceptions to this is are: layout qualifiers (which I don’t feel are terribly relevant in the context of Scheme, at least not until uniform locations become prevalent), do-while loops (which have no Scheme analog), `#error`, `#line`, `#undef`, and struct uniforms (implementation reasons). Let me know if there are any features that you find lacking.
 
-Keep in mind, however, that glls cannot do anything that the GLSL can’t, such as making anonymous or recursive functions.
+Keep in mind that glls cannot do anything that the GLSL can’t, such as making anonymous or recursive functions.
 
 ##### Variables and naming
 Symbols in glls are transformed from a Scheme style into the C style used in the GLSL. Letters after dashes are uppercased (i.e., symbols become camelCased). Symbols prefixed by `gl:` in glls become prefixed by `gl_` in GLSL.
@@ -112,7 +111,7 @@ For programmer-defined variables this has little consequence. The importance of 
 ##### Types
 When defining variables or functions in glls, types must be supplied. Basic types (e.g. `int`, `mat2x2`) are given either as a symbol or keyword (e.g. `int`, `#:mat2x2`), whichever is preferred. Types with qualifiers (e.g. `lowp float`, `out mediump vec2`) are given as lists (e.g. `(lowp float)`, `(out mediump vec2)`).
 
-Arrays are specified as lists beginning with the keyword `#:array`. The next element in the list is the type, while the optional third element is the size. E.g. `(#:array int 5)`. When used with qualifiers, the array takes the place of the type, e.g. `(highp (#:array float)`.
+Arrays are specified as lists beginning with the keyword `#:array`. The next element in the list is the type, while the optional third element is the size. E.g. `(#:array int 5)`. When used with qualifiers, the array takes the place of the type, e.g. `(highp (#:array float))`.
 
 ##### Functions
 GLSL functions and operators are all called like normal Lisp functions. In almost all cases the GLSL symbol (taking into account the renaming described in [Variables and naming](#variables-and-naming) can be used, while many operators can be called with their Scheme counterpart. The only operators that may not be used directly are `|`, `||`, `|=`, `.`, `=`, and array reference which must be called with their counterparts.
@@ -127,7 +126,7 @@ The following is a mapping between glls aliases for GLSL functions and operators
 * `or`: `||`
 * `not`: `!`
 * `bitwise-and`, `bit-or`: `&`
-* `bitwise-or`, `bit-or`: `|`
+* `bitwise-ior`, `bit-or`: `|`
 * `bitwise-xor`, `bit-xor`: `^`
 * `bitwise-not`, `bit-not`: `~`
 * `arithmetic-shift`: `<<`
@@ -142,7 +141,7 @@ Variables, functions, and records (structs) are defined much like they are in Sc
 
     (define <name> <type> [<value>])
 
-Defines the variable `name`.
+Defines the variable `name`. When `type` is an array, a vector literal (eg. `#(1 2 3)`) may be used.
 
     (define (<name> [(<parameter> <type>) ...]) <return-type> <body> ...)
 
@@ -150,7 +149,7 @@ Defines the function `name`. The last expression in the body of a non-void funct
 
     (let ((<name> <type> [<value>]) ...) <body> ...)
 
-Defines the supplied variables. Note that, unlike Scheme, the variables created will continue to exist outside of the `let` (until the extent of whatever lexical scope the `let` exists within) and they therefore do not exist within their own scope. Note also that variables defined in `let` are within the scope of variables that are subsequently defined in the same `let` (i.e. `let` functions like `let*` in Scheme, and in fact `let*` may be used if preferred).
+Defines the supplied variables. When `type` is an array, a vector literal (eg. `#(1 2 3)`) may be used. Note that, unlike Scheme, the variables created will continue to exist outside of the `let` (until the extent of whatever lexical scope the `let` exists within). In other words, `let` does not introduce scope. Note also that variables defined in `let` are within the scope of variables that are subsequently defined in the same `let` (i.e. `let` functions like `let*` in Scheme, and in fact `let*` may be used if preferred).
 
     (define-record <name> (<type> <field>) ...)
 
@@ -176,7 +175,7 @@ GLSL style `for` loop.
 
     (do-times (<var> [<start>] <end>) <body> ...)
 
-Equivalent to `(for (define <var> #:int <start>) (< <var> <end>) (++ <var>) <body> ...)`
+Equivalent to `(for (define <var> #:int <start>) (< <var> <end>) (++ <var>) <body> ...)`. `start` defaults to 0.
 
     (while <condition> <body> ...)
 
@@ -185,7 +184,7 @@ GLSL style `while` loop.
 ###### Jumps
 All GLSL jumps (`continue`, `break`, `return`, `discard`) can be called like functions. Return may accept one argument. Keep in mind that the last expression in a non void function is automatically returned.
 
-##### Pre-processor
+###### Pre-processor
 The following forms can be used to add pre-processor directives:
 
     (%define <name> [<value>])
@@ -207,9 +206,9 @@ Aside from knowing how to write glls shaders, only one macro, one function, and 
 (use glls (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
 (defpipeline foo 
-  ((#:vertex) ((vertex #:vec2) (color #:vec3) #:uniform (view-matrix #:mat4))
+  ((#:vertex) ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
      (define (main) #:void
-       (set! gl:position (* view-matrix (vec4 vertex 0.0 1.0)))
+       (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
        (set! c color))
      -> ((c #:vec3)))
   ((#:fragment) ((c #:vec3))
@@ -231,9 +230,9 @@ This example is similar to the first, but also illustrates the ability to define
 (use glls (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
 (defpipeline foo 
-  ((#:vertex) ((vertex #:vec2) (color #:vec3) #:uniform (view-matrix #:mat4))
+  ((#:vertex) ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
      (define (main) #:void
-       (set! gl:position (* view-matrix (vec4 vertex 0.0 1.0)))
+       (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
        (set! c color))
      -> ((c #:vec3)))
   (#:fragment ((c #:vec3))
@@ -242,9 +241,9 @@ This example is similar to the first, but also illustrates the ability to define
      -> ((frag-color #:vec4))))
 
 (defshader bar (#:vertex)
-    ((vertex #:vec2) (color #:vec3) #:uniform (view-matrix #:mat4))
+    ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
   (define (main) #:void
-    (set! gl:position (* view-matrix (vec4 vertex 0.0 1.0)))
+    (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
     (set! c color))
   -> ((c #:vec3)))
 
@@ -262,6 +261,12 @@ This example is similar to the first, but also illustrates the ability to define
 ## Version history
 ### Version 0.1.0
 * Initial release
+
+## Roadmap
+Some features that are planned for glls:
+
+- Automatic creation and compilation of rendering functions for a given pipeline
+- Dynamic re-compilation of pipelines suited for REPL sessions
 
 ## Source repository
 Source available on [GitHub](https://github.com/AlexCharlton/glls).
