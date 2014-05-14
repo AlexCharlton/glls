@@ -8,6 +8,8 @@
 ;;;; This can be done by:
 ;;;;     csc complete.scm
 
+;;;; Use arrow keys to rotate, zoom camera.
+
 (import chicken scheme)
 (use glls gl-math gl-utils (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
