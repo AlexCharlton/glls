@@ -60,8 +60,8 @@
         (compile-expr '(do-times (i 2 4) (break))))
   (test "for (i = 0; (< i 4); ++i) {\n    break;\n}\n"
         (compile-expr '(for (set! i 0) (< i 4) (++ i) (break))))
-  (test "struct name {\n    int x;\n    int y[];\n};\n"
-        (compile-expr '(define-record foo (x int) (y (array: int)))))
+  (test "struct foo {\n    int x;\n    int y[];\n};\n"
+        (compile-expr '(define-record foo (x int:) (y (array: int:)))))
   (test "int x = 4;\nint y;\ny = 1;\nx + y;\n"
         (compile-expr '(let ((x int 4) (y int)) (set! y 1) (+ x y))))
   (test "int x = 4;\nx + 1;\n"
