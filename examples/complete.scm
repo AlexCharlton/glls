@@ -29,28 +29,27 @@
 (define distance (make-parameter 0.2))
 (define camera-position (make-parameter (make-f32vector 3 0)))
 
-(define-external (keyCallback (c-pointer window)
-                              (int key) (int scancode) (int action) (int mods))
-    void
-  (cond
-   [(and (eq? key glfw:+key-escape+) (eq? action glfw:+press+))
-    (glfw:set-window-should-close window 1)]
-   [(and (eq? key glfw:+key-left+) (eq? action glfw:+press+))
-    (pan (sub1 (pan)))]
-   [(and (eq? key glfw:+key-right+) (eq? action glfw:+press+))
-    (pan (add1 (pan)))]
-   [(and (eq? key glfw:+key-left+) (eq? action glfw:+release+))
-    (pan (add1 (pan)))]
-   [(and (eq? key glfw:+key-right+) (eq? action glfw:+release+))
-    (pan (sub1 (pan)))]
-   [(and (eq? key glfw:+key-up+) (eq? action glfw:+press+))
-    (zoom (sub1 (zoom)))]
-   [(and (eq? key glfw:+key-down+) (eq? action glfw:+press+))
-    (zoom (add1 (zoom)))]
-   [(and (eq? key glfw:+key-up+) (eq? action glfw:+release+))
-    (zoom (add1 (zoom)))]
-   [(and (eq? key glfw:+key-down+) (eq? action glfw:+release+))
-    (zoom (sub1 (zoom)))]))
+(glfw:key-callback
+ (lambda (window key scancode action mods)
+   (cond
+    [(and (eq? key glfw:+key-escape+) (eq? action glfw:+press+))
+     (glfw:set-window-should-close window 1)]
+    [(and (eq? key glfw:+key-left+) (eq? action glfw:+press+))
+     (pan (sub1 (pan)))]
+    [(and (eq? key glfw:+key-right+) (eq? action glfw:+press+))
+     (pan (add1 (pan)))]
+    [(and (eq? key glfw:+key-left+) (eq? action glfw:+release+))
+     (pan (add1 (pan)))]
+    [(and (eq? key glfw:+key-right+) (eq? action glfw:+release+))
+     (pan (sub1 (pan)))]
+    [(and (eq? key glfw:+key-up+) (eq? action glfw:+press+))
+     (zoom (sub1 (zoom)))]
+    [(and (eq? key glfw:+key-down+) (eq? action glfw:+press+))
+     (zoom (add1 (zoom)))]
+    [(and (eq? key glfw:+key-up+) (eq? action glfw:+release+))
+     (zoom (add1 (zoom)))]
+    [(and (eq? key glfw:+key-down+) (eq? action glfw:+release+))
+     (zoom (sub1 (zoom)))])))
 
 (define (update)
   (angle (+ (angle) (/ (pan) 30)))
@@ -119,7 +118,6 @@
 
 ;;; Initialize and main loop
 (glfw:with-window (640 480 "Example" resizable: #f)
-   (glfw:set-key-callback (glfw:window) #$keyCallback)
    (gl:enable gl:+depth-test+)
    (gl:depth-func gl:+less+)
    (compile-pipelines)
