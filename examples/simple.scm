@@ -55,6 +55,7 @@
 
 ;;; Initialization and main loop
 (glfw:with-window (640 480 "Example" resizable: #f)
+  (gl:init)
   (compile-pipelines)
   (vao (make-vao (f32vector->blob vertex-data) (u16vector->blob index-data)
                  `((,(pipeline-attribute 'vertex simple-shader) float: 2)

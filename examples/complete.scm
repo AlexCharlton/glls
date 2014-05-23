@@ -118,6 +118,7 @@
 
 ;;; Initialize and main loop
 (glfw:with-window (640 480 "Example" resizable: #f)
+   (gl:init)
    (gl:enable gl:+depth-test+)
    (gl:depth-func gl:+less+)
    (compile-pipelines)

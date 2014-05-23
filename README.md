@@ -217,6 +217,7 @@ Aside from knowing how to write glls shaders, only one macro, one function, and 
      -> ((frag-color #:vec4))))
 
 (glfw:with-window (640 480 "Example" resizable: #f)
+   (gl:init)
    (compile-pipelines)
    (print foo)
    (gl:use-program (pipeline-program foo)))
@@ -252,6 +253,7 @@ This example is similar to the first, but also illustrates the ability to define
   (cadr (pipeline-shaders foo)))
 
 (glfw:with-window (640 480 "Example" resizable: #f)
+   (gl:init)
    (compile-pipelines)
    (print foo)
    (print baz)
