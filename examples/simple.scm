@@ -3,7 +3,7 @@
 ;;;; This is a glls version of the example found on the opengl-glew wiki page:
 ;;;; https://wiki.call-cc.org/eggref/4/opengl-glew
 
-(import chicken scheme)
+(import chicken scheme srfi-4)
 (use glls (prefix glfw3 glfw:) (prefix opengl-glew gl:) gl-math gl-utils)
 
 ;;; VAO data
