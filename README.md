@@ -25,9 +25,9 @@ The default GLSL version used by shaders. Defaults to `330`.
 ### Shaders
     [record] (shader TYPE SOURCE INPUTS OUTPUTS UNIFORMS PROGRAM)
 
-Used to represent shaders. Returned by `defshader` and `create-shader`. It should not typically be necessary to access the slots of this record.
+Used to represent shaders. Returned by `define-shader` and `create-shader`. It should not typically be necessary to access the slots of this record.
 
-    [macro] (defshader NAME GLLS-SHADER)
+    [macro] (define-shader NAME GLLS-SHADER)
 
 Defines, for syntax and run-time, a new `shader` named `NAME`. The (unquoted) form `GLLS-SHADER` should conform to language defined in the section [The glls shader language](#the-glls-shader-language). Before shaders are used, they must be compiled by OpenGL with `compile-shader`.
 
@@ -49,11 +49,11 @@ Compile (in OpenGL) `SHADER`. Nothing is done if the shader has already been com
 
     [record] (pipeline SHADERS ATTRIBUTES UNIFORMS PROGRAM)
 
-Created with `defpipeline` or `create-pipeline`, contains the data needed for a pipeline. `SHADERS` is the list of shader records. `ATTRIBUTES` and `UNIFORMS` are lists of the attributes and uniforms of the shader, specified as `(name . type)` pairs before compilation (with `compile-pipeline` or `compile-pipelines`) and `(name location type)` lists after compilation. `PROGRAM` is the GL ID of the program (always 0 before compilation).
+Created with `define-pipeline` or `create-pipeline`, contains the data needed for a pipeline. `SHADERS` is the list of shader records. `ATTRIBUTES` and `UNIFORMS` are lists of the attributes and uniforms of the shader, specified as `(name . type)` pairs before compilation (with `compile-pipeline` or `compile-pipelines`) and `(name location type)` lists after compilation. `PROGRAM` is the GL ID of the program (always 0 before compilation).
 
-    [macro] (defpipeline NAME . SHADERS)
+    [macro] (define-pipeline NAME . SHADERS)
 
-Defines, for syntax and run-time, a new `pipeline` named `NAME`. The `SHADERS` should either be forms conforming to language defined in the section [The glls shader language](#the-glls-shader-language), `shader`s defined by `defshader`, or a mix of the two. Pipelines must have at least one vertex and one fragment shader to be able to compile. Before pipelines are used, they must be compiled by OpenGL with `compile-pipeline` or `compile-pipelines`.
+Defines, for syntax and run-time, a new `pipeline` named `NAME`. The `SHADERS` should either be forms conforming to language defined in the section [The glls shader language](#the-glls-shader-language), `shader`s defined by `define-shader`, or a mix of the two. Pipelines must have at least one vertex and one fragment shader to be able to compile. Before pipelines are used, they must be compiled by OpenGL with `compile-pipeline` or `compile-pipelines`.
 
     [procedure] (create-pipeline . SHADERS)
 
@@ -65,7 +65,7 @@ Compile (in OpenGL) the `PIPELINE` and sets its `PROGRAM` slot to the OpenGL pro
 
     [procedure] (compile-pipelines)
 
-Compile (as per `compile-pipeline`) all the pipelines defined by `defpipeline` and `create-pipeline`. Must be called while there is an active OpenGL context.
+Compile (as per `compile-pipeline`) all the pipelines defined by `define-pipeline` and `create-pipeline`. Must be called while there is an active OpenGL context.
 
     [procedure] (pipeline-uniform UNIFORM PIPELINE)
 
@@ -78,7 +78,7 @@ Return the location of `ATTRIBUTE`. The `PIPELINE` must be compiled before this 
 
 ### The glls shader language
 #### Shader syntax
-The shaders of glls – the forms that `defshader`, `defpipeline`, etc. expect – have the following syntax:
+The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. expect – have the following syntax:
 
     (<type> [#:version <version>] [#:extensions <extension>] [#:pragmas <pragma>]) <inputs> <body> -> <outputs>
 
@@ -198,14 +198,14 @@ The following forms can be used to add pre-processor directives:
 ## Examples
 These examples depends on the [glfw3](http://wiki.call-cc.org/eggref/4/glfw3) egg for window and context creation. The examples presented here illustrate only very basic shader definition and loading. For more complete examples, see the [examples directory](https://github.com/AlexCharlton/glls/tree/master/examples) of the source.
 
-Aside from knowing how to write glls shaders, only one macro, one function, and one record is necessary to use glls: `defpipeline`, `compile-pipelines`, and the record `pipeline`. This example illustrates this minimal pipeline creation
+Aside from knowing how to write glls shaders, only one macro, one function, and one record is necessary to use glls: `define-pipeline`, `compile-pipelines`, and the record `pipeline`. This example illustrates this minimal pipeline creation
 
 ``` Scheme
 (import chicken scheme)
 
 (use glls (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
-(defpipeline foo 
+(define-pipeline foo 
   ((#:vertex) ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
      (define (main) #:void
        (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
@@ -230,7 +230,7 @@ This example is similar to the first, but also illustrates the ability to define
 
 (use glls (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
-(defpipeline foo 
+(define-pipeline foo 
   ((#:vertex) ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
      (define (main) #:void
        (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
@@ -241,14 +241,14 @@ This example is similar to the first, but also illustrates the ability to define
        (set! frag-color (vec4 c 1.0)))
      -> ((frag-color #:vec4))))
 
-(defshader bar (#:vertex)
+(define-shader bar (#:vertex)
     ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
   (define (main) #:void
     (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
     (set! c color))
   -> ((c #:vec3)))
 
-(defpipeline baz 
+(define-pipeline baz 
   `(,bar uniforms: ((mvp #:mat4)))
   (cadr (pipeline-shaders foo)))
 

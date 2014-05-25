@@ -4,7 +4,7 @@
 
 (use glls (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
-(defpipeline foo 
+(define-pipeline foo 
   ((#:vertex) ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
      (define (main) #:void
        (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
@@ -15,14 +15,14 @@
        (set! frag-color (vec4 c 1.0)))
      -> ((frag-color #:vec4))))
 
-(defshader bar (#:vertex)
+(define-shader bar (#:vertex)
     ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
   (define (main) #:void
     (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
     (set! c color))
   -> ((c #:vec3)))
 
-(defpipeline baz 
+(define-pipeline baz 
   `(,bar uniforms: ((mvp #:mat4)))
   (cadr (pipeline-shaders foo)))
 

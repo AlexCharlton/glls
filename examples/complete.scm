@@ -64,7 +64,7 @@
                            0 1 0))))
 
 ;;; Rendering
-(defpipeline phong-shader 
+(define-pipeline phong-shader 
   ((#:vertex) ((vertex #:vec3) (normal #:vec3)
                #:uniform (mvp #:mat4) (model #:mat4) (inv-transpose-model #:mat4))
      (define (main) #:void

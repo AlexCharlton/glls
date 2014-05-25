@@ -29,7 +29,7 @@
 (define model-matrix (mat4-identity))
 
 ;;; Pipeline definition
-(defpipeline simple-shader
+(define-pipeline simple-shader
   ((#:vertex) ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
      (define (main) #:void
        (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))

@@ -12,8 +12,8 @@
    pipeline-program
    create-pipeline
    pipelines
-   defpipeline
-   defshader
+   define-pipeline
+   define-shader
    create-shader
    compile-shader
    compile-pipeline
@@ -46,7 +46,7 @@
 (define (%delete-pipeline pipeline)
   (gl:delete-program (pipeline-program pipeline)))
 
-(define-syntax defshader
+(define-syntax define-shader
   (ir-macro-transformer
    (lambda (exp rename compare)
      (let* ([name (cadr exp)]
@@ -89,7 +89,7 @@
     (set-finalizer! pipeline %delete-pipeline)
     pipeline))
 
-(define-syntax defpipeline
+(define-syntax define-pipeline
   (ir-macro-transformer
    (lambda (exp i compare)
      (if (< (length exp) 3)
