@@ -10,6 +10,7 @@
    pipeline-attributes
    pipeline-uniforms
    pipeline-program
+   pipeline?
    create-pipeline
    pipelines
    define-pipeline
