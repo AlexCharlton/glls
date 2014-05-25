@@ -56,25 +56,27 @@
                            ,(shader-source shader) ',(shader-inputs shader)
                            ',(shader-outputs shader) ',(shader-uniforms shader)
                            0)])
-       `(begin
-         (begin-for-syntax
-          (require-library glls)
-          (define ,name ,shader-maker))
-         (define ,name ,shader-maker)
-         (set-finalizer! ,name %delete-shader))))))
+       `(define ,name (set-finalizer! ,shader-maker %delete-shader))))))
 
 (define (create-shader form)
   (set-finalizer! (%create-shader form) %delete-shader))
 
 (define pipelines (make-parameter '()))
 
+(define (shader-with-uniforms? s)
+  (and (list? s)
+     (= (length s) 3)
+     (shader? (first s))
+     (equal? (second s) uniforms:)))
+
 (define (create-pipeline . shaders)
   (if (< (length shaders) 2)
       (syntax-error "Invalid pipeline definition:" shaders))
   (let* ([shaders (map (lambda (s)
-                         (if (shader? s)
-                             s
-                             (create-shader s)))
+                         (cond
+                          [(shader? s) s]
+                          [(shader-with-uniforms? s) (car s)]
+                          [else (create-shader s)]))
                        shaders)]
          [attributes (apply append
                             (map shader-inputs
@@ -93,23 +95,16 @@
      (if (< (length exp) 3)
          (syntax-error "Invalid pipeline definition:" exp))
      (let* ([new-shader? (lambda (s) (and (list? s)
-                                     (= (length s) 5)
-                                     (compare (cadddr s) '->)))]
+                                   (= (length s) 5)
+                                   (compare (cadddr s) '->)))]
             [name (cadr exp)]
             [shaders (map (lambda (s)
                             (if (new-shader? s)
                                 (%create-shader s)
-                                (eval s)))
+                                s))
                           (strip-syntax (cddr exp)))]
-            [shader-makers-syntax (map (lambda (s)
-                                         `(make-shader
-                                           ,(shader-type s)
-                                           ,(shader-source s) ',(shader-inputs s)
-                                           ',(shader-outputs s) ',(shader-uniforms s)
-                                           0))
-                                       shaders)]
-            [shader-makers (map (lambda (s f)
-                                  (if (new-shader? f)
+            [shader-makers (map (lambda (s)
+                                  (if (shader? s)
                                       `(set-finalizer!
                                         (make-shader
                                          ,(shader-type s)
@@ -117,22 +112,10 @@
                                          ',(shader-outputs s) ',(shader-uniforms s)
                                          0)
                                         %delete-shader)
-                                      f))
-                                shaders (cddr exp))]
-            [attributes (apply append
-                               (map shader-inputs
-                                    (filter (lambda (s)
-                                              (compare (shader-type s) #:vertex))
-                                            shaders)))]
-            [uniforms (apply append (map shader-uniforms shaders))])
-       `(begin
-          (begin-for-syntax
-           (require-library glls)
-           (define ,name
-             (make-pipeline (list ,@shader-makers-syntax)
-                            ',attributes ',uniforms 0)))
-          (define ,name
-            (create-pipeline ,@shader-makers)))))))
+                                      s))
+                                shaders)])
+       `(define ,name
+          (create-pipeline ,@shader-makers))))))
 
 
 ;;; GL compiling
