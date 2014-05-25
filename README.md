@@ -99,7 +99,7 @@ The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. 
 #### Shader Lisp
 For the most part, the Lisp used to define glls shaders looks like Scheme with one notable difference: types must be specified whenever a variable or function is defined. Under the hood, forms are being passed to [fmt](https://wiki.call-cc.org/eggref/4/fmt#c-as-s-expressions), so everything that you can do there will work in glls. Details of the Lisp used for shaders is provided in the following sections.
 
-It should be possible to do almost anything in glls that you would want to do with the GLSL. Known exceptions to this is are: layout qualifiers (which I don’t feel are terribly relevant in the context of Scheme, at least not until uniform locations become prevalent), do-while loops (which have no Scheme analog), `#error`, `#line`, `#undef`, and struct uniforms (implementation reasons). Let me know if there are any features that you find lacking.
+It should be possible to do almost anything in glls that you would want to do with the GLSL. Known exceptions to this is are: layout qualifiers (which I don’t feel are terribly relevant in the context of Scheme, at least not until uniform locations become prevalent), do-while loops (which have no Scheme analog), uniform blocks (for no good reason), `#error`, `#line`, `#undef`, and struct uniforms (implementation reasons). Let me know if there are any features that you find lacking.
 
 Keep in mind that glls cannot do anything that the GLSL can’t, such as making anonymous or recursive functions.
 
@@ -135,8 +135,7 @@ The following is a mapping between glls aliases for GLSL functions and operators
 * `array-ref`, `vector-ref`: `[]` (array reference, e.g. `(array-ref a 4)` → `a[4]`)
 * `length`: `.length()` (vector length, e.g. `(length vec)` → `vec.length()`
 
-##### Special forms
-###### Definition
+##### Definition
 Variables, functions, and records (structs) are defined much like they are in Scheme, with additional requirement of including types.
 
     (define <name> <type> [<value>])
@@ -155,7 +154,7 @@ Defines the supplied variables. When `type` is an array, a vector literal (eg. `
 
 Defines the struct `name`.
 
-###### Control
+##### Control
 The following can be used with identical syntax to scheme:
 
     (if <test> <true> [<false>])
@@ -168,7 +167,7 @@ The following can be used with identical syntax to scheme:
 
 Keep in mind that they may only be used in the same place as their corresponding GLSL statements, with the exception of `begin`, which can only be used where it is possible to have multiple expressions.
 
-###### Iteration
+##### Iteration
     (for <init> <condition> <update> <body> ...)
 
 GLSL style `for` loop.
@@ -181,10 +180,10 @@ Equivalent to `(for (define <var> #:int <start>) (< <var> <end>) (++ <var>) <bod
 
 GLSL style `while` loop.
 
-###### Jumps
+##### Jumps
 All GLSL jumps (`continue`, `break`, `return`, `discard`) can be called like functions. Return may accept one argument. Keep in mind that the last expression in a non void function is automatically returned.
 
-###### Pre-processor
+##### Pre-processor
 The following forms can be used to add pre-processor directives:
 
     (%define <name> [<value>])
