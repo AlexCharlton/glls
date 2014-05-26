@@ -4,14 +4,15 @@
 ;;;; loaded by opengl-glew. The file "horse.ply.gz" must be in
 ;;;; the same directory as this program.
 
-;;;; Due to the use of 'define-external', this file must be compiled.
-;;;; This can be done by:
-;;;;     csc complete.scm
+;;;; NOTE:
+;;;; This uses glls-render, so if this file is compiled it must be linked with OpenGL
+;;;; E.g.:
+;;;; csc -lGL complete.scm
 
 ;;;; Use arrow keys to rotate, zoom camera.
 
-(import chicken scheme)
-(use glls gl-math gl-utils (prefix glfw3 glfw:) (prefix opengl-glew gl:))
+(import chicken scheme srfi-4)
+(use glls-render gl-math gl-utils (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
 ;;; Matrices
 (define projection-matrix (perspective 640 480 0.01 100 70))
@@ -19,6 +20,7 @@
 (define model-matrix (rotate-y (degrees->radians 90)
                                (rotate-x (degrees->radians -90)
                                          (mat4-identity))))
+(define mvp (make-parameter (make-f32vector 16)))
 (define inverse-transpose-model
   (inverse (transpose model-matrix)))
 
@@ -61,7 +63,10 @@
      (f32vector-set! (camera-position) 2 camera-z)
      (view-matrix (look-at camera-x 0 camera-z
                            0 0 0
-                           0 1 0))))
+                           0 1 0)))
+   (mvp (m* projection-matrix
+            (m* (view-matrix) model-matrix)
+            (mvp))))
 
 ;;; Rendering
 (define-pipeline phong-shader 
@@ -97,24 +102,7 @@
                      (swizzle n x))))))
    -> ((frag-color #:vec4))))
 
-(define vao (make-parameter #f))
-
-(define (render)
-  (gl:use-program (pipeline-program phong-shader))
-  (gl:uniform-matrix4fv (pipeline-uniform 'mvp phong-shader) 1 #f
-                        (m* projection-matrix
-                            (m* (view-matrix) model-matrix)))
-  (gl:uniform-matrix4fv (pipeline-uniform 'model phong-shader) 1 #f
-                        model-matrix)
-  (gl:uniform-matrix4fv (pipeline-uniform 'inv-transpose-model phong-shader) 1 #f
-                        inverse-transpose-model)
-  (gl:uniform3fv (pipeline-uniform 'camera-position phong-shader) 1
-                  (camera-position))
-  (gl:bind-vertex-array (vao))
-  (gl:draw-elements-base-vertex gl:+triangles+ 290898 (type->gl-type uint:) #f 0)
-
-  (gl:check-error)
-  (gl:bind-vertex-array 0))
+(define renderable (make-parameter #f))
 
 ;;; Initialize and main loop
 (glfw:with-window (640 480 "Example" resizable: #f)
@@ -123,15 +111,23 @@
    (gl:depth-func gl:+less+)
    (compile-pipelines)
    (map (lambda (s) (print (shader-source s))) (pipeline-shaders phong-shader))
-   (vao (load-ply-vao "horse.ply.gz"
-                  vertex: `((,(pipeline-attribute 'vertex phong-shader) x y z)
-                            (,(pipeline-attribute 'normal phong-shader) nx ny nz))
-                  face: 'vertex_indices))
+   (renderable (load-ply-renderable
+                "horse.ply.gz"
+                make-phong-shader-renderable
+                vertex: `((,(pipeline-attribute 'vertex phong-shader)
+                           x y z)
+                          (,(pipeline-attribute 'normal phong-shader)
+                           nx ny nz))
+                face: 'vertex_indices
+                mvp: (mvp)
+                model: model-matrix
+                camera-position: (camera-position)
+                inv-transpose-model: inverse-transpose-model))
    (let loop ()
      (glfw:swap-buffers (glfw:window))
      (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
      (update)
-     (render)
+     (render-phong-shader (renderable))
      (glfw:poll-events)
      (unless (glfw:window-should-close (glfw:window))
        (loop))))
