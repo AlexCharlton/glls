@@ -330,7 +330,7 @@
                [uniform-binders '()] [sampler-binders '()] [sampler-unbinders '()])
       (if (null? uniforms)
           (values uniform-binders sampler-binders sampler-unbinders)
-          (let-values ([(type n) (uniform-type/number (cdar uniforms))])
+          (let-values ([(type n) (uniform-type/number (cadar uniforms))])
             (if (sampler? type)
                 (let-values ([(binder unbinder) (sampler->binder type i (texture-id))])
                   (parameterize ((texture-id (add1 (texture-id))))
