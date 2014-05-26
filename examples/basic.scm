@@ -28,7 +28,7 @@
   -> ((c #:vec3)))
 
 (define-pipeline baz 
-  `(,bar uniforms: ((mvp #:mat4)))
+  (bar uniform: (mvp #:mat4))
   (cadr (pipeline-shaders foo)))
 
 (glfw:with-window (640 480 "Example" resizable: #f)

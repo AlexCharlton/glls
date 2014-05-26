@@ -47,19 +47,18 @@
        (= (length s) 5)
        (equal? (cadddr s) '->))
     (if* (member #:uniform (cadr s))
-         (cdr it)
-         '())]
-   [(and (list? s) (member #:uniform s))
-    (cadr (member #:uniform s))]
+          (cdr it)
+          '())]
+   [(and (list? s) (>= (length s) 2) (member #:uniform s))
+    (cdr (member #:uniform s))]
    [else (syntax-error 'define-pipeline "Only shaders that include uniform definitions may be used with glls-render" s)]))
 
 (define-syntax define-renderable-functions
   (ir-macro-transformer
    (lambda (exp i compare)
      (match exp
-       [(_ name . (? (lambda (s) (> (length s) 1))
-                     shaders))
-        (let* ([name (strip-syntax [cadr exp])]
+       [(_ name . shaders)
+        (let* ([name (strip-syntax name)]
                [uniforms (concatenate (map get-uniforms (strip-syntax shaders)))])
           (let-values ([(render-funs render-fun-name)
                         (if (feature? compiling:)

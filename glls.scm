@@ -64,20 +64,13 @@
 
 (define pipelines (make-parameter '()))
 
-(define (shader-with-uniforms? s)
-  (and (list? s)
-     (= (length s) 3)
-     (shader? (first s))
-     (equal? (second s) uniforms:)))
-
 (define (create-pipeline . shaders)
   (if (< (length shaders) 2)
       (syntax-error "Invalid pipeline definition:" shaders))
   (let* ([shaders (map (lambda (s)
-                         (cond
-                          [(shader? s) s]
-                          [(shader-with-uniforms? s) (car s)]
-                          [else (create-shader s)]))
+                         (if (shader? s)
+                             s
+                             (create-shader s)))
                        shaders)]
          [attributes (apply append
                             (map shader-inputs
@@ -98,11 +91,15 @@
      (let* ([new-shader? (lambda (s) (and (list? s)
                                    (= (length s) 5)
                                    (compare (cadddr s) '->)))]
+            [shader-with-uniforms? (lambda (s) (and (list? s)
+                                             (>= (length s) 2)
+                                             (equal? (second s) uniform:)))]
             [name (cadr exp)]
             [shaders (map (lambda (s)
-                            (if (new-shader? s)
-                                (%create-shader s)
-                                s))
+                            (cond
+                             [(new-shader? s) (%create-shader s)]
+                             [(shader-with-uniforms? s) (car s)]
+                             [else s]))
                           (strip-syntax (cddr exp)))]
             [shader-makers (map (lambda (s)
                                   (if (shader? s)

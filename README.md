@@ -248,7 +248,7 @@ This example is similar to the first, but also illustrates the ability to define
   -> ((c #:vec3)))
 
 (define-pipeline baz 
-  `(,bar uniforms: ((mvp #:mat4)))
+  bar
   (cadr (pipeline-shaders foo)))
 
 (glfw:with-window (640 480 "Example" resizable: #f)
