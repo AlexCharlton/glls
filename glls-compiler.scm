@@ -81,15 +81,14 @@
              (cons (car i)
                    (cadr i))))
   (let* ([uniforms (if* (member #:uniform in)
-                        it
-                        '(_))]
-         [in (if (not (equal? uniforms '(_)))
-                 (take in (- (length in) (length uniforms)))
-                 in)])
+                        (cdr it)
+                        '())]
+         [in (take in (- (length in) (if (null? uniforms) 0
+                                         (add1 (length uniforms)))))])
     (values (append (params in 'in)
                     (params out 'out)
-                    (params (cdr uniforms) 'uniform))
-            (name-type in) (name-type out) (name-type (cdr uniforms)))))
+                    (params uniforms 'uniform))
+            (name-type in) (name-type out) (name-type uniforms))))
 
 (define (compile-expr expr)
   (fmt #f (c-expr (glsl->fmt expr))))
