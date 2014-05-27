@@ -1,4 +1,8 @@
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 
 typedef struct GLLSrenderable2{
     unsigned int program, vao, nElements, elementType, mode;
