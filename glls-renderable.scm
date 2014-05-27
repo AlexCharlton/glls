@@ -67,10 +67,10 @@
        "GLLSrenderable1024 *renderable = (GLLSrenderable1024 *) data;
         renderable->uniformValues[i] = value;") data i value)]
    [(fixnum? value)
-    (foreign-lambda* void
-        ((u32vector data) (int i) (int value))
-      "GLLSrenderable1024 *renderable = (GLLSrenderable1024 *) data;
-       renderable->uniformValues[i] = (void *) value;")]
+    ((foreign-lambda* void
+         ((c-pointer data) (int i) (int value))
+       "GLLSrenderable1024 *renderable = (GLLSrenderable1024 *) data;
+       renderable->uniformValues[i] = (void *) value;") data i value)]
    [else (error 'set-renderable-uniform-value! "Invalid type" value)]))
 
 (define set-renderable-uniform-location!
@@ -133,7 +133,7 @@
      else if (i <= 128) C_return(malloc(sizeof(GLLSrenderable128)));
      else if (i <= 256) C_return(malloc(sizeof(GLLSrenderable256)));
      else if (i <= 1024) C_return(malloc(sizeof(GLLSrenderable1024)));
-     fprintf(stderr, \"Error GLLSrenerables cannot hold this many uniforms: ~d\", i);
+     fprintf(stderr, \"Error GLLSrenerables cannot hold this many uniforms: ~d\\n\", i);
      C_return(NULL);"))
 
 (define (symbol->c-symbol sym)
@@ -231,7 +231,8 @@
     [(mat2x4) (dynamic/static glUniformMatrix2x4fv 'glUniformMatrix2x4fv)]
     [(mat4x2) (dynamic/static glUniformMatrix4x2fv 'glUniformMatrix4x2fv)]
     [(mat3x4) (dynamic/static glUniformMatrix3x4fv 'glUniformMatrix3x4fv)]
-    [(mat4x3) (dynamic/static glUniformMatrix4x3fv 'glUniformMatrix4x3fv)]))
+    [(mat4x3) (dynamic/static glUniformMatrix4x3fv 'glUniformMatrix4x3fv)]
+    [else (error "Not a GLSL type" type)]))
 
 (define (matrix? type)
   (case (symbol->glsl type)
@@ -241,19 +242,19 @@
 
 (define (sampler? type)
   (case (symbol->glsl type)
-    [(sampler1d sampler2d sampler3d samplerCube sampler2DRect sampler1DShadow sampler2DShadow sampler2DRectShadow sampler1DArray sampler2DArray sampler1DArrayShadow sampler2DArrayShadow samplerBuffer sampler2DMS sampler2DMSArray
-                isampler1d isampler2d isampler3d isamplerCube isampler2DRect isampler1DArray isampler2DArray isamplerBuffer isampler2DMS isampler2DMSArray
-                usampler1d usampler2d usampler3d usamplerCube usampler2DRect usampler1DArray usampler2DArray usamplerBuffer usampler2DMS usampler2DMSArray)
+    [(sampler1D sampler2D sampler3D samplerCube sampler2DRect sampler1DShadow sampler2DShadow sampler2DRectShadow sampler1DArray sampler2DArray sampler1DArrayShadow sampler2DArrayShadow samplerBuffer sampler2DMS sampler2DMSArray
+                isampler1D isampler2D isampler3D isamplerCube isampler2DRect isampler1DArray isampler2DArray isamplerBuffer isampler2DMS isampler2DMSArray
+                usampler1D usampler2D usampler3D usamplerCube usampler2DRect usampler1DArray usampler2DArray usamplerBuffer usampler2DMS usampler2DMSArray)
      #t]
     [else #f]))
 
 (define (sampler->texture type)
   (case (symbol->glsl type)
-    [(sampler1d sampler1DShadow isampler1d usampler1d)
+    [(sampler1D sampler1DShadow isampler1D usampler1D)
      gl:+texture-1d+]
-    [(sampler2d sampler2DShadow isampler2d usampler2d)
+    [(sampler2D sampler2DShadow isampler2D usampler2D)
      gl:+texture-2d+]
-    [(sampler3d isampler3d usampler3d)
+    [(sampler3D isampler3D usampler3D)
      gl:+texture-3d+]
     [(samplerCube isamplerCube usamplerCube)
      gl:+texture-cube-map+]
@@ -268,7 +269,8 @@
     [(sampler2DMS isampler2DMS usampler2DMS)
      gl:+texture-2d-multisample+]
     [(sampler2DMSArray isampler2DMSArray usampler2DMSArray)
-     gl:+texture-2d-multisample-array+]))
+     gl:+texture-2d-multisample-array+]
+    [else (error "No such sampler type" type)]))
 
 (define (uniform->binder type n i)
   (if (dynamic?)
@@ -300,17 +302,19 @@
        (lambda (renderable size)
          (gl:active-texture (+ gl:+texture0+ texture-id))
          (gl:bind-texture (sampler->texture type)
-                          (get-renderable-uniform-value renderable i))
+                          (pointer->address
+                           (get-renderable-uniform-value renderable i)))
          (gl:uniform1i (get-renderable-uniform-location renderable size i)
                        texture-id))
        (lambda ()
          (gl:bind-texture (sampler->texture type) 0)))
       (values
        `(%begin
-         (glActiveTexture (+ GL_TEXTURE ,texture-id))
+         (glActiveTexture (+ GL_TEXTURE0 ,texture-id))
          (glBindTexture ,(sampler->texture type)
-                        (vector-ref (%-> data uniformValues) ,i))
-         (glUniformli (vector-ref (%-> data uniformLocations) ,i)
+                        (%cast (unsigned int)
+                               (vector-ref (%-> data uniformValues) ,i)))
+         (glUniform1i (vector-ref (%-> data uniformLocations) ,i)
                       ,texture-id))
        `(glBindTexture ,(sampler->texture type) 0))))
 
