@@ -36,4 +36,4 @@
    (compile-pipelines)
    (print foo)
    (print baz))
-)
+) ; end module

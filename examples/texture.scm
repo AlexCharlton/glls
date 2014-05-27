@@ -1,10 +1,13 @@
 ;;;; texture.scm
 
-;;;;
+;;;; This illustrates glls-render working with a texture
+
+;;;; Must be run in the same directory as img_test.png
+
 ;;;; NOTE:
 ;;;; This uses glls-render, so if this file is compiled it must be linked with OpenGL
 ;;;; E.g.:
-;;;; csc -lGL simple.scm
+;;;; csc -lGL texture.scm
 
 (module texture-glls-example *
 
