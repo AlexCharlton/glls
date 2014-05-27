@@ -395,7 +395,10 @@
                         (,fast-fun-begin-name data)
                         (,fast-fun-name data)
                         (,fast-fun-end-name data)))))
-       fun-name))))
+       fun-name
+       fast-fun-begin-name
+       fast-fun-name
+       fast-fun-end-name))))
 
 (define (render-renderable uniforms renderable)
   (parameterize ([dynamic? #t])

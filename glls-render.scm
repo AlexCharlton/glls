@@ -60,7 +60,8 @@
        [(_ name . shaders)
         (let* ([name (strip-syntax name)]
                [uniforms (concatenate (map get-uniforms (strip-syntax shaders)))])
-          (let-values ([(render-funs render-fun-name)
+          (let-values ([(render-funs render-fun-name fast-fun-begin-name
+                                     fast-fun-name fast-fun-end-name)
                         (if (feature? compiling:)
                             (render-functions (c-prefix) name uniforms)
                             (values #f #f))])
@@ -76,7 +77,18 @@
                             #f)
                        (foreign-declare ,render-funs)
                        (define ,(symbol-append 'render- name)
-                         (foreign-lambda void ,render-fun-name c-pointer)))
+                         (foreign-lambda void ,render-fun-name c-pointer))
+                       (define (,(symbol-append name '-fast-render-function-pointers))
+                         (values
+                          (foreign-value ,(string-append
+                                           "&" (symbol->string fast-fun-begin-name))
+                                         c-pointer)
+                          (foreign-value ,(string-append
+                                           "&" (symbol->string fast-fun-name))
+                                         c-pointer)
+                          (foreign-value ,(string-append
+                                           "&" (symbol->string fast-fun-end-name))
+                                         c-pointer))))
                     `(define (,(symbol-append 'render- name) renderable)
                        (render-renderable ',uniforms renderable)))
                (define (,(symbol-append 'make- name '-renderable) . args)
