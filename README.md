@@ -223,8 +223,9 @@ In order to use one of the pre-generated render functions, you must have somethi
 - `vao:` – A VAO such as those returned by [opengl-glew’s `make-vao`](http://api.call-cc.org/doc/opengl-glew/make-vao). I.e.: A VAO that binds an array of attributes – for each element in the pipeline – as well as an element array.
 - `mode:` – The drawing mode to use when drawing the elements of the VAO. Must be one of (opengl-glew’s): `+points+`, `+line-strip+`, `+line-loop+`, `+lines+`, `+line-strip-adjacency+`, `+triangles+`, `+triangle-strip+`, `+triangle-fan+`, `+triangles-adjacency+`, `+triangle-strip-adjacency+`, or `+patches+`. Defaults to `+triangles+`.
 - `n-elements:` – The number of elements (vertices) to draw.
-- `element-type:` – The type of the values in the VAO’s element array. Must be one of `+unsigned-byte+`, `+unsigned-short+`, or `+unsigned-int+.
+- `element-type:` – The type of the values in the VAO’s element array. Must be one of `+unsigned-byte+`, `+unsigned-short+`, or `+unsigned-int+`.
 - `offset:` – A byte offset to the location of the desired indices to draw.
+- `data:` – An optional pointer to an appropriate glls renderable object. If not provided, a fresh renderable object will be created. [gllsRenderable.h](https://github.com/AlexCharlton/glls/blob/master/gllsRender.h) defines the structs used for renderables. The are chosen based on the number of uniforms present in the pipeline.
 
 See the [`glDrawElements` documentation](https://www.opengl.org/sdk/docs/man/html/glDrawElements.xhtml) for more information about these expected arguments.
 
