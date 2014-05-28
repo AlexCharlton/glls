@@ -78,8 +78,13 @@
                        (foreign-declare ,render-funs)
                        (define ,(symbol-append 'render- name)
                          (foreign-lambda void ,render-fun-name c-pointer))
-                       (define (,(symbol-append name '-fast-render-function-pointers))
+                       (define (,(symbol-append name '-fast-render-functions))
                          (values
+                          (foreign-lambda void ,(symbol->string fast-fun-begin-name)
+                                          c-pointer)
+                          (foreign-lambda void ,(symbol->string fast-fun-name)
+                                          c-pointer)
+                          (foreign-lambda void ,(symbol->string fast-fun-end-name))
                           (foreign-value ,(string-append
                                            "&" (symbol->string fast-fun-begin-name))
                                          c-pointer)
