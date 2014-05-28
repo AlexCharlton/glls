@@ -387,14 +387,13 @@
                                         (%-> data nElements)
                                         (%-> data elementType)
                                         (%-> data offset)))
-                  (%fun void ,fast-fun-end-name (((const ,renderable-struct *)
-                                                  data))
+                  (%fun void ,fast-fun-end-name ()
                         ,@sampler-unbinders
                         (glBindVertexArray 0))
                   (%fun void ,fun-name (((const ,renderable-struct *) data))
                         (,fast-fun-begin-name data)
                         (,fast-fun-name data)
-                        (,fast-fun-end-name data)))))
+                        (,fast-fun-end-name)))))
        fun-name
        fast-fun-begin-name
        fast-fun-name
