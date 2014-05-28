@@ -415,7 +415,8 @@
                         (get-renderable-element-type renderable)
                         (get-renderable-offset renderable))
       (for-each (lambda (b) (b)) sampler-unbinders)
-      (gl:bind-vertex-array 0))))
+      (gl:bind-vertex-array 0)
+      (gl:check-error))))
 
 (define (symbol->keyword sym)
     (string->keyword (symbol->string sym)))
