@@ -1,22 +1,25 @@
 ;; glls.setup -*- scheme -*-
 
+(define compile-options
+  "-O3 -d0")
+
 (make (("glls.so" ("glls.scm" "glls-compiler.import.so")
-        (compile -s -J -O3 -d0 glls.scm))
+        (compile -s -J ,compile-options glls.scm))
        ("glls.import.so" ("glls.so")
-        (compile -s -O3 -d0 glls.import.scm))
+        (compile -s ,compile-options glls.import.scm))
        ("glls-compiler.so" ("glls-compiler.scm")
-        (compile -s -O3 glls-compiler.scm -J))
+        (compile -s ,compile-options glls-compiler.scm -J))
        ("glls-compiler.import.so" ("glls-compiler.so")
-        (compile -s -O3 glls-compiler.import.scm))
+        (compile -s ,compile-options glls-compiler.import.scm))
        ("glls-render.so" ("glls-renderable.import.so" "glls.import.so"
                           "glls-render.scm")
-        (compile -s -O3 glls-render.scm -J))
+        (compile -s ,compile-options glls-render.scm -J))
        ("glls-render.import.so" ("glls-render.so")
-        (compile -s -O3 glls-render.import.scm))
+        (compile -s ,compile-options glls-render.import.scm))
        ("glls-renderable.so" ("glls-compiler.import.so" "glls-renderable.scm")
-        (compile -s -O3 glls-renderable.scm -J))
+        (compile -s ,compile-options glls-renderable.scm -J))
        ("glls-renderable.import.so" ("glls-renderable.so")
-        (compile -s -O3 glls-renderable.import.scm)))
+        (compile -s ,compile-options glls-renderable.import.scm)))
   '("glls.so" "glls.import.so" "glls-compiler.so"  "glls-compiler.import.so"
     "glls-render.so" "glls-renderable.so"
     "glls-render.import.so" "glls-renderable.import.so"))
