@@ -64,7 +64,7 @@
                                      fast-fun-name fast-fun-end-name)
                         (if (feature? compiling:)
                             (render-functions (c-prefix) name uniforms)
-                            (values #f #f))])
+                            (values #f #f #f #f #f))])
             `(begin
                ,(if (feature? compiling:)
                     `(begin
