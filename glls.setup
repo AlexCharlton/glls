@@ -1,5 +1,7 @@
 ;; glls.setup -*- scheme -*-
 
+(use make)
+
 (define compile-options
   "-O3 -d0")
 

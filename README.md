@@ -13,6 +13,7 @@ This repository is a [Chicken Scheme](http://call-cc.org/) egg.
 It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/egg-index-4.html) and can be installed with `chicken-install glls`.
 
 ## Requirements
+* make
 * fmt
 * matchable
 * miscmacros
@@ -314,13 +315,19 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
-### Version 0.2.1
+### Version 0.2.2
 29 May 2014
+
+- Add make as a dependency
+
+**Version 0.2.1**
+
 - Fix bug affecting dynamic use of glls-render
 
 **Version 0.2.0**
 
 28 May 2014
+
 - Automatic render function generation
 - Removed `eval` from `defpipeline` (which broke some things when used in modules)
 - Renamed `defpipeline`, `defshader`
