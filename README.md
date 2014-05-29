@@ -314,7 +314,12 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
-### Version 0.2.0
+### Version 0.2.1
+29 May 2014
+- Fix bug affecting dynamic use of glls-render
+
+**Version 0.2.0**
+
 28 May 2014
 - Automatic render function generation
 - Removed `eval` from `defpipeline` (which broke some things when used in modules)
