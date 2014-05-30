@@ -12,7 +12,6 @@
    pipeline-program
    pipeline?
    create-pipeline
-   pipelines
    define-pipeline
    define-shader
    create-shader
@@ -62,7 +61,7 @@
 (define (create-shader form)
   (set-finalizer! (%create-shader form) %delete-shader))
 
-(define pipelines (make-parameter '()))
+(define *pipelines* '())
 
 (define (create-pipeline . shaders)
   (if (< (length shaders) 2)
@@ -79,7 +78,7 @@
                                          shaders)))]
          [uniforms (apply append (map shader-uniforms shaders))]
          [pipeline (make-pipeline shaders attributes uniforms 0)])
-    (pipelines (cons pipeline (pipelines)))
+    (set! *pipelines* (cons pipeline *pipelines*))
     (set-finalizer! pipeline %delete-pipeline)
     pipeline))
 
@@ -112,8 +111,16 @@
                                         %delete-shader)
                                       s))
                                 shaders)])
-       `(define ,name
-          (create-pipeline ,@shader-makers))))))
+       (if (and (feature? csi:)
+              (handle-exceptions e (begin #f) (eval name)))
+           `(begin
+              (define old-program (pipeline-program ,name))
+              (define ,name
+                (create-pipeline ,@shader-makers))
+              (set! (pipeline-program ,name) old-program)
+              (compile-pipelines))
+           `(define ,name
+              (create-pipeline ,@shader-makers)))))))
 
 
 ;;; GL compiling
@@ -130,35 +137,37 @@
     (set! (shader-program shader) (gl:make-shader (shader-int-type shader) (shader-source shader)))))
 
 (define (compile-pipeline pipeline)
-  (when (zero? (pipeline-program pipeline))
-    (for-each compile-shader (pipeline-shaders pipeline))
-    (let* ([program (gl:make-program (map shader-program (pipeline-shaders pipeline)))]
-           [attribute-location
-            (lambda (a)
-              (match-let* ([(name . type) a]
-                           [location (gl:get-attrib-location
-                                      program
-                                      (symbol->string (symbol->glsl name)))])
-                          (list name location type)))]
-           [uniform-location
-            (lambda (u)
-              (match-let* ([(name . type) u]
-                           [location (gl:get-uniform-location
-                                      program
-                                      (symbol->string (symbol->glsl name)))])
-                          (list name location type)))])
-      (for-each (lambda (s)
-                  (gl:detach-shader program (shader-program s)))
-                (pipeline-shaders pipeline))
-      (set! (pipeline-program pipeline) program)
-      (set! (pipeline-attributes pipeline)
-            (map attribute-location (pipeline-attributes pipeline)))
-      (set! (pipeline-uniforms pipeline)
-            (map uniform-location (pipeline-uniforms pipeline))))))
+  (for-each compile-shader (pipeline-shaders pipeline))
+  (let* ([program (gl:make-program (map shader-program (pipeline-shaders pipeline))
+                                   (if (> (pipeline-program pipeline) 0)
+                                       (pipeline-program pipeline)
+                                       (gl:create-program)))]
+         [attribute-location
+          (lambda (a)
+            (match-let* ([(name . type) a]
+                         [location (gl:get-attrib-location
+                                    program
+                                    (symbol->string (symbol->glsl name)))])
+              (list name location type)))]
+         [uniform-location
+          (lambda (u)
+            (match-let* ([(name . type) u]
+                         [location (gl:get-uniform-location
+                                    program
+                                    (symbol->string (symbol->glsl name)))])
+              (list name location type)))])
+    (for-each (lambda (s)
+                (gl:detach-shader program (shader-program s)))
+              (pipeline-shaders pipeline))
+    (set! (pipeline-program pipeline) program)
+    (set! (pipeline-attributes pipeline)
+      (map attribute-location (pipeline-attributes pipeline)))
+    (set! (pipeline-uniforms pipeline)
+      (map uniform-location (pipeline-uniforms pipeline)))))
 
 (define (compile-pipelines)
-  (for-each compile-pipeline (pipelines))
-  (pipelines '()))
+  (for-each compile-pipeline *pipelines*)
+  (set! *pipelines* '()))
 
 ;; Accessors
 (define (pipeline-uniform uniform pipeline)
