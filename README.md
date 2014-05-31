@@ -1,5 +1,5 @@
 # glls
-glls (GL Lisp Shaders) lets you write [GLSL](https://www.opengl.org/documentation/glsl/) (OpenGL Shader Language) shaders in a convenient pseudo-scheme language in Chicken Scheme. The compilation into GLSL happens at compile-time for zero run-time cost. Run-time compilation is also supported. To those that want to dynamically construct shaders: I solute you.
+glls (GL Lisp Shaders) lets you write [GLSL](https://www.opengl.org/documentation/glsl/) (OpenGL Shader Language) shaders in a convenient pseudo-scheme language in Chicken Scheme. The compilation into GLSL happens at compile-time for zero run-time cost. Run-time compilation and dynamic re-compilation is also supported. To those that want to dynamically construct shaders: I solute you.
 
 In addition to the eponymous module, glls also provides the `glls-render` module. `glls-render` enhances glls to create automatic rendering functions for each pipeline. When compiled, these rendering functions are created in efficient C, although dynamic functions are also provided. See the section [Automatic render functions](#automatic-render-functions) for details.
 
@@ -57,6 +57,8 @@ Created with `define-pipeline` or `create-pipeline`, contains the data needed fo
     [macro] (define-pipeline PIPELINE-NAME . SHADERS)
 
 Defines, for syntax and run-time, a new `pipeline` named `NAME`. The `SHADERS` should either be forms conforming to language defined in the section [The glls shader language](#the-glls-shader-language), `shader`s defined by `define-shader`, or a mix of the two. Pipelines must have at least one vertex and one fragment shader to be able to compile. Before pipelines are used, they must be compiled by OpenGL with `compile-pipeline` or `compile-pipelines`.
+
+`define-pipeline` behaves differently when it is being evaluated *and* when a given pipeline is being re-defined. In this case, the pipeline inherits the GL program ID of the pipeline that is being redefined. Additionally, the pipeline is compiled by OpenGL right away (and as a consequence, so are any pipelines that are pending compilation). This is done so that pipelines can be edited and re-evaluated in a REPL session and one’s scene will be updated as expected. See the [interactive example](https://github.com/AlexCharlton/glls/blob/master/examples/interactive.scm) for an example of how this can be accomplished.
 
 `define-pipeline` has additional effects when used with the `glls-render` module (see [Automatic render functions](#automatic-render-functions)).
 
@@ -315,6 +317,10 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
+### Version 0.3.0
+30 May 2014
+- Support dynamic re-evaluation of pipelines
+
 ### Version 0.2.2
 29 May 2014
 
