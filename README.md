@@ -1,5 +1,5 @@
-# glls
-glls (GL Lisp Shaders) lets you write [GLSL](https://www.opengl.org/documentation/glsl/) (OpenGL Shader Language) shaders in a convenient pseudo-scheme language in Chicken Scheme. The compilation into GLSL happens at compile-time for zero run-time cost. Run-time compilation and dynamic re-compilation is also supported. To those that want to dynamically construct shaders: I solute you.
+/ glls
+glls (GL Lisp Shaders) lets you write [GLSL](https://www.opengl.org/documentation/glsl/) (OpenGL Shader Language) shaders in a convenient pseudo-scheme language in Chicken Scheme. The compilation into GLSL happens at compile-time for zero run-time cost. Run-time compilation and dynamic recompilation is also supported. To those that want to dynamically construct shaders: I solute you.
 
 In addition to the eponymous module, glls also provides the `glls-render` module. `glls-render` enhances glls to create automatic rendering functions for each pipeline. When compiled, these rendering functions are created in efficient C, although dynamic functions are also provided. See the section [Automatic render functions](#automatic-render-functions) for details.
 
@@ -32,11 +32,11 @@ Used to represent shaders. Returned by `define-shader` and `create-shader`. It s
 
     [macro] (define-shader SHADER-NAME GLLS-SHADER)
 
-Defines, for syntax and run-time, a new `shader` named `NAME`. The (unquoted) form `GLLS-SHADER` should conform to language defined in the section [The glls shader language](#the-glls-shader-language). Before shaders are used, they must be compiled by OpenGL with `compile-shader`.
+Defines a new `shader` named `NAME`. The (unquoted) form `GLLS-SHADER` should conform to language defined in the section [The glls shader language](#the-glls-shader-language). Before shaders are used, they must be compiled by OpenGL with `compile-shader`.
 
     [procedure] (create-shader GLLS-SHADER #!key INPUTS)
 
-Creates a new `shader`. The form `GLLS-SHADER` should conform to language defined in the section [The glls shader language](#the-glls-shader-language). The key `INPUTS` can be used to include additional inputs to the shader. Before shaders are used, they must be compiled by OpenGL with `compile-shader`.
+Creates (at run-time) a new `shader`. The form `GLLS-SHADER` should conform to language defined in the section [The glls shader language](#the-glls-shader-language). The key `INPUTS` can be used to include additional inputs to the shader. Before shaders are used, they must be compiled by OpenGL with `compile-shader`.
 
     [procedure] (compile-glls GLLS-SHADER #!key INPUTS)
 
@@ -56,19 +56,19 @@ Created with `define-pipeline` or `create-pipeline`, contains the data needed fo
 
     [macro] (define-pipeline PIPELINE-NAME . SHADERS)
 
-Defines, for syntax and run-time, a new `pipeline` named `NAME`. The `SHADERS` should either be forms conforming to language defined in the section [The glls shader language](#the-glls-shader-language), `shader`s defined by `define-shader`, or a mix of the two. Pipelines must have at least one vertex and one fragment shader to be able to compile. Before pipelines are used, they must be compiled by OpenGL with `compile-pipeline` or `compile-pipelines`.
+Defines a new `pipeline` named `NAME`. The `SHADERS` should either be forms conforming to language defined in the section [The glls shader language](#the-glls-shader-language), `shader`s defined by `define-shader`, or a mix of the two. Pipelines must have at least one vertex and one fragment shader to be able to compile. Before pipelines are used, they must be compiled by OpenGL with `compile-pipeline` or `compile-pipelines`.
 
-`define-pipeline` behaves differently when it is being evaluated *and* when a given pipeline is being re-defined. In this case, the pipeline inherits the GL program ID of the pipeline that is being redefined. Additionally, the pipeline is compiled by OpenGL right away (and as a consequence, so are any pipelines that are pending compilation). This is done so that pipelines can be edited and re-evaluated in a REPL session and one’s scene will be updated as expected. See the [interactive example](https://github.com/AlexCharlton/glls/blob/master/examples/interactive.scm) for an example of how this can be accomplished.
+`define-pipeline` behaves differently when it is being evaluated *and* when a given pipeline is being redefined. In this case, the new pipeline inherits the GL program ID of the old one. Additionally, the pipeline is compiled by OpenGL right away (and as a consequence, so are any pipelines that are pending compilation). This is done so that pipelines can be edited and reevaluated in a REPL session and one’s scene will be updated as expected. See the [interactive example](https://github.com/AlexCharlton/glls/blob/master/examples/interactive.scm) for an example of how this can be accomplished.
 
 `define-pipeline` has additional effects when used with the `glls-render` module (see [Automatic render functions](#automatic-render-functions)).
 
     [procedure] (create-pipeline . SHADERS)
 
-Creates a new `pipeline`. The `SHADERS` should either be forms conforming to language defined in the section [The glls shader language](#the-glls-shader-language), `shader`s, or a mix of the two. Pipelines must have at least one vertex and one fragment shader to be able to compile. Before pipelines are used, they must be compiled by OpenGL with `compile-pipeline` or `compile-pipelines`.
+Creates (at run-time) a new `pipeline`. The `SHADERS` should either be forms conforming to language defined in the section [The glls shader language](#the-glls-shader-language), `shader`s, or a mix of the two. Pipelines must have at least one vertex and one fragment shader to be able to compile. Before pipelines are used, they must be compiled by OpenGL with `compile-pipeline` or `compile-pipelines`.
 
     [procedure] (compile-pipeline PIPELINE)
 
-Compile (in OpenGL) the `PIPELINE` and sets its `PROGRAM` slot to the OpenGL program ID. Compiles all of the pipeline’s shaders with `compile-shader`. Must be called while there is an active OpenGL context.
+Compile (in OpenGL) the `PIPELINE` and sets its `PROGRAM` slot to the OpenGL program ID. If the pipeline’s `PROGRAM` slot is already set to a non-zero value, this ID will be reused for the new program. Compiles all of the pipeline’s shaders with `compile-shader`. Must be called while there is an active OpenGL context.
 
     [procedure] (compile-pipelines)
 
@@ -87,7 +87,8 @@ Return the location of `ATTRIBUTE`. The `PIPELINE` must be compiled before this 
 #### Shader syntax
 The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. expect – have the following syntax:
 
-    (<type> [#:version <version>] [#:extensions <extension>] [#:pragmas <pragma>]) <inputs> <body> -> <outputs>
+    (<type> [version: <version>] [extensions: <extension>] [pragmas: <pragma>]) 
+      <inputs> <body> -> <outputs>
 
 `type` is the keyword type of the shader. It must be one of `#:vertex`, `#:fragment`, `#:geometry`, `#:tess-control`, `#:tess-evaluation`, or `#:compute`.
 
@@ -97,7 +98,7 @@ The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. 
 
 `pragmas` is the list of GLSL pragmas desired (in string form). E.g. `'("optimize(on)")`. Defaults to `'()`
 
-`inputs` is a list of the input variables to the shader. These are given in `(name type)` lists. The keyword `#:uniform` may be used, and all following inputs will be uniforms. E.g.: `((vertex #:vec2) (color #:vec3) #:uniform (view-matrix #:mat4))`
+`inputs` is a list of the input variables to the shader. These are given in `(name type)` lists. The keyword `uniform:` may be used, and all following inputs will be uniforms. E.g.: `((vertex #:vec2) (color #:vec3) uniform: (view-matrix #:mat4))`
 
 `body` is the form representing the code of the shader. See the section [Shader Lisp](#shader-lisp) for an explanation of the kind of code that is expected.
 
@@ -140,10 +141,10 @@ The following is a mapping between glls aliases for GLSL functions and operators
 * `field`: `.` (struct field reference, e.g. `(field point x)` → `point.x`)
 * `swizzle`: `.` (vector swizzling, e.g. `(swizzle color r g)` → `color.rg`)
 * `array-ref`, `vector-ref`: `[]` (array reference, e.g. `(array-ref a 4)` → `a[4]`)
-* `length`: `.length()` (vector length, e.g. `(length vec)` → `vec.length()`
+* `length`: `.length()` (vector length, e.g. `(length vec)` → `vec.length()`)
 
 ##### Definition
-Variables, functions, and records (structs) are defined much like they are in Scheme, with additional requirement of including types.
+Variables, functions, and records (structs) are defined much like they are in Scheme, with the additional requirement of including types.
 
     (define <name> <type> [<value>])
 
@@ -202,7 +203,7 @@ The following forms can be used to add pre-processor directives:
     (%ifndef <value> <true> [<false>])
 
 ### Automatic render functions
-By using the `glls-render` module, you can have glls automatically generate a function that will render an object with your glls shader. `glls-render` exports a new `define-pipeline` that defines a set of functions used for rendering and managing the objects that will be rendered. `glls-render` should not be used with the `glls` module: It re-exports everything that you need from `glls`.
+By using the `glls-render` module, you can have glls automatically generate a function that will render an object with your glls shader. `glls-render` exports a new `define-pipeline` that defines a set of functions used for rendering and managing the objects that will be rendered. `glls-render` should not be used with the `glls` module: It reexports everything that you need from `glls`.
 
 Recalling `define-pipeline`:
 
@@ -218,17 +219,17 @@ Of course, if you are defining the shaders in the pipeline, then a separate list
 
 `glls-render` causes `define-pipeline` to define several new functions. First is `render-PIPELINE-NAME`. `render-PIPELINE-NAME` takes one argument: a renderable object (see [Renderables](#renderables)).
 
-The `render-PIPELINE-NAME` function works differently depending on whether the `define-pipeline` has been compiled or interpreted (although the end results should stay the same). When `define-pipeline` is compiled, the resulting `render-PIPELINE-NAME` function compiled directly to efficient (non-branching) C. When `define-pipeline` is interpreted, `render-PIPELINE-NAME` calls a generic rendering function that is not nearly as fast.
+The `render-PIPELINE-NAME` function works differently depending on whether the `define-pipeline` has been compiled or interpreted (although the end results should stay the same). When `define-pipeline` is compiled, the resulting `render-PIPELINE-NAME` function is compiled directly to efficient (non-branching) C. When `define-pipeline` is interpreted, `render-PIPELINE-NAME` calls a generic rendering function that is not nearly as fast.
 
 #### Renderables
-In order to use one of the pre-generated render functions, you must have something to render. That’s why `define-pipeline` also defines a function that constructs a renderable object: `make-SHADER-NAME-renderable`. This function takes a number of keyword arguments:
+In order to use one of the automatically generated render functions, you must have something to render. That’s why `define-pipeline` also defines a function that constructs a renderable object: `make-SHADER-NAME-renderable`. This function takes a number of keyword arguments:
 
 - `vao:` – A VAO such as those returned by [opengl-glew’s `make-vao`](http://api.call-cc.org/doc/opengl-glew/make-vao). I.e.: A VAO that binds an array of attributes – for each element in the pipeline – as well as an element array.
 - `mode:` – The drawing mode to use when drawing the elements of the VAO. Must be one of (opengl-glew’s): `+points+`, `+line-strip+`, `+line-loop+`, `+lines+`, `+line-strip-adjacency+`, `+triangles+`, `+triangle-strip+`, `+triangle-fan+`, `+triangles-adjacency+`, `+triangle-strip-adjacency+`, or `+patches+`. Defaults to `+triangles+`.
 - `n-elements:` – The number of elements (vertices) to draw.
 - `element-type:` – The type of the values in the VAO’s element array. Must be one of `+unsigned-byte+`, `+unsigned-short+`, or `+unsigned-int+`.
 - `offset:` – A byte offset to the location of the desired indices to draw.
-- `data:` – An optional pointer to an appropriate glls renderable object. If not provided, a fresh renderable object will be created. [gllsRenderable.h](https://github.com/AlexCharlton/glls/blob/master/gllsRender.h) defines the structs used for renderables. The are chosen based on the number of uniforms present in the pipeline.
+- `data:` – An optional pointer to an appropriate glls renderable object. If not provided, a fresh renderable object will be created. [gllsRenderable.h](https://github.com/AlexCharlton/glls/blob/master/gllsRender.h) defines the structs used for renderables. Which struct is used for a given pipeline is chosen based on the number of uniforms present in the pipeline.
 
 See the [`glDrawElements` documentation](https://www.opengl.org/sdk/docs/man/html/glDrawElements.xhtml) for more information about these expected arguments.
 
@@ -263,7 +264,7 @@ Aside from knowing how to write glls shaders, only one macro, one function, and 
 (use glls (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
 (define-pipeline foo 
-  ((#:vertex) ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
+  ((#:vertex) ((vertex #:vec2) (color #:vec3) uniform: (mvp #:mat4))
      (define (main) #:void
        (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
        (set! c color))
@@ -288,7 +289,7 @@ This example is similar to the first, but also illustrates the ability to define
 (use glls (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
 (define-pipeline foo 
-  ((#:vertex) ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
+  ((#:vertex) ((vertex #:vec2) (color #:vec3) uniform: (mvp #:mat4))
      (define (main) #:void
        (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
        (set! c color))
@@ -299,7 +300,7 @@ This example is similar to the first, but also illustrates the ability to define
      -> ((frag-color #:vec4))))
 
 (define-shader bar (#:vertex)
-    ((vertex #:vec2) (color #:vec3) #:uniform (mvp #:mat4))
+    ((vertex #:vec2) (color #:vec3) uniform: (mvp #:mat4))
   (define (main) #:void
     (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
     (set! c color))
@@ -319,7 +320,8 @@ This example is similar to the first, but also illustrates the ability to define
 ## Version history
 ### Version 0.3.0
 30 May 2014
-- Support dynamic re-evaluation of pipelines
+
+- Support dynamic reevaluation of pipelines
 
 ### Version 0.2.2
 29 May 2014
@@ -340,12 +342,6 @@ This example is similar to the first, but also illustrates the ability to define
 
 ### Version 0.1.0
 * Initial release
-
-## Roadmap
-Some features that are planned for glls:
-
-- Automatic creation and compilation of rendering functions for a given pipeline
-- Dynamic re-compilation of pipelines suited for REPL sessions
 
 ## Source repository
 Source available on [GitHub](https://github.com/AlexCharlton/glls).
