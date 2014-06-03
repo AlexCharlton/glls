@@ -1,4 +1,4 @@
-/ glls
+# glls
 glls (GL Lisp Shaders) lets you write [GLSL](https://www.opengl.org/documentation/glsl/) (OpenGL Shader Language) shaders in a convenient pseudo-scheme language in Chicken Scheme. The compilation into GLSL happens at compile-time for zero run-time cost. Run-time compilation and dynamic recompilation is also supported. To those that want to dynamically construct shaders: I solute you.
 
 In addition to the eponymous module, glls also provides the `glls-render` module. `glls-render` enhances glls to create automatic rendering functions for each pipeline. When compiled, these rendering functions are created in efficient C, although dynamic functions are also provided. See the section [Automatic render functions](#automatic-render-functions) for details.
@@ -251,6 +251,11 @@ When compiled, the render function defined by `define-pipeline` is actually a co
 `define-pipeline` does not define all of these functions separately, but instead defines a single function with which to access them: `PIPELINE-NAME-fast-render-functions`. This function returns six values: the begin render function, the render function, the end render function, and pointers to those same C functions in that order.
 
 One major assumption must be kept in mind while working with the fast render functions: textures are only bound once. In other words: it is assumed that that all of the renderables belonging to the same pipeline share a common “sprite sheet” (or other shared texture type). If this assumption does not hold true, simply use the standard render function, or call the begin render function for every set of renderables that uses a separate texture.
+
+#### Utilities
+    [procedure] (load-ply-renderable PLY RENDERABLE-MAKER . ARGS)
+
+Load the given PLY file and return a renderable. Returns three values: a renderable, the vertex data blob, and the index data blob.  `PLY` is a PLY file name such as those accepted by opengl-glew’s [`load-ply`](http://api.call-cc.org/doc/opengl-glew/load-ply). `RENDERABLE-MAKER` is the function used to construct the renderable of the desired pipeline. `ARGS` are the keyword arguments that must include `vertex:` and a `face:` arguments (as per [`load-ply-vao`](http://api.call-cc.org/doc/opengl-glew/load-ply-vao)) as well as arguments for each uniform (as per the renderable maker function).
 
 
 ## Examples
