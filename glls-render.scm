@@ -114,15 +114,17 @@
     (get-keyword arg args
                  (lambda () (error 'load-vao-renderable "Expected keyword argument"
                               arg args))))
-  (let-values ([(vao n-verts mode element-type)
+  (let-values ([(vao vertex-data index-data n-verts mode element-type)
                 (gl:load-ply-vao ply
                                  vertex: (get-arg vertex:)
                                  face: (get-arg face:))])
-    (apply renderable-maker
-           n-elements: n-verts
-           element-type: element-type
-           mode: mode
-           vao: vao
-           args)))
+    (values (apply renderable-maker
+                   n-elements: n-verts
+                   element-type: element-type
+                   mode: mode
+                   vao: vao
+                   args)
+            vertex-data
+            index-data)))
 
 ) ; glls-render
