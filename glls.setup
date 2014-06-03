@@ -3,7 +3,7 @@
 (use make)
 
 (define compile-options
-  "-O3 -d0")
+  "-O3 -d2")
 
 (make (("glls.so" ("glls.scm" "glls-compiler.import.so")
         (compile -s -J ,compile-options glls.scm))
@@ -32,4 +32,4 @@
    "glls-compiler.so" "glls-compiler.import.so"
    "glls-render.so" "glls-render.import.so"
    "glls-renderable.so" "glls-renderable.import.so")
- '((version "0.3.0")))
+ '((version "0.3.1")))

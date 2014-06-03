@@ -323,7 +323,14 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
-### Version 0.3.0
+### Version 0.3.1
+2 June 2014
+
+- Fix `load-ply-renderable`
+- Fix gllsRender.h
+
+**Version 0.3.0**
+
 30 May 2014
 
 - Support dynamic reevaluation of pipelines
