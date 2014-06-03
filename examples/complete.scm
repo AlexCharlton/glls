@@ -11,7 +11,7 @@
 
 ;;;; Use arrow keys to rotate, zoom camera.
 
-(import chicken scheme srfi-4)
+(import chicken scheme)
 (use glls-render gl-math gl-utils (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
 ;;; Matrices
@@ -19,10 +19,11 @@
 (define view-matrix (make-parameter #f))
 (define model-matrix (rotate-y (degrees->radians 90)
                                (rotate-x (degrees->radians -90)
-                                         (mat4-identity))))
+                                         (mat4-identity #t))))
 (define mvp (make-parameter (make-f32vector 16)))
 (define inverse-transpose-model
-  (inverse (transpose model-matrix)))
+  (inverse (transpose model-matrix)
+           #t))
 
 ;;; Camera movement
 (define pan (make-parameter 0))
@@ -111,23 +112,26 @@
    (gl:depth-func gl:+less+)
    (compile-pipelines)
    (map (lambda (s) (print (shader-source s))) (pipeline-shaders phong-shader))
-   (renderable (load-ply-renderable
-                "horse.ply.gz"
-                make-phong-shader-renderable
-                vertex: `((,(pipeline-attribute 'vertex phong-shader)
-                           x y z)
-                          (,(pipeline-attribute 'normal phong-shader)
-                           nx ny nz))
-                face: 'vertex_indices
-                mvp: (mvp)
-                model: model-matrix
-                camera-position: (camera-position)
-                inv-transpose-model: inverse-transpose-model))
+   (renderable (receive (r vertex-data index-data)
+                   (load-ply-renderable
+                    "horse.ply.gz"
+                    make-phong-shader-renderable
+                    vertex: `((,(pipeline-attribute 'vertex phong-shader)
+                               x y z)
+                              (,(pipeline-attribute 'normal phong-shader)
+                               nx ny nz))
+                    face: 'vertex_indices
+                    mvp: (mvp)
+                    model: model-matrix
+                    camera-position: (camera-position)
+                    inv-transpose-model: inverse-transpose-model)
+                 (list r vertex-data index-data))) ; Gotta keep the data safe from being GC'd
    (let loop ()
      (glfw:swap-buffers (glfw:window))
      (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
      (update)
-     (render-phong-shader (renderable))
+     (render-phong-shader (car (renderable)))
+     (gl:check-error)
      (glfw:poll-events)
      (unless (glfw:window-should-close (glfw:window))
        (loop))))

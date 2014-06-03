@@ -11,8 +11,9 @@
 
 (module texture-glls-example *
 
-(import chicken scheme srfi-4)
+(import chicken scheme)
 (use glls-render (prefix glfw3 glfw:) (prefix opengl-glew gl:) gl-math gl-utils soil)
+
 
 ;;; VAO data
 (define vertex-data (f32vector -1 -1  0  1
@@ -37,7 +38,9 @@
 (define model-matrix (mat4-identity))
 
 (define mvp (m* projection-matrix
-                (m* view-matrix model-matrix)))
+                (m* view-matrix model-matrix)
+                #t ; Matrix should be in a non-GC'd area
+                ))
 
 
 ;;; Pipeline definition
@@ -58,7 +61,7 @@
 (glfw:with-window (640 480 "Example" resizable: #f)
   (gl:init)
   (compile-pipelines)
-  (let ([vao (make-vao (f32vector->blob vertex-data) (u16vector->blob index-data)
+  (let ([vao (make-vao vertex-data index-data
                        `((,(pipeline-attribute 'vertex sprite-shader) float: 2)
                          (,(pipeline-attribute 'tex-coord sprite-shader) float: 2)))]
         [texture (load-ogl-texture "img_test.png" 0 0 0)])
@@ -72,6 +75,7 @@
      (glfw:swap-buffers (glfw:window))
      (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
      (render-sprite-shader (renderable))
+     (gl:check-error)
      (glfw:poll-events)
      (unless (glfw:window-should-close (glfw:window))
        (loop))))

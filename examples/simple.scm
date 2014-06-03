@@ -10,7 +10,7 @@
 
 (module simple-glls-example *
 
-(import chicken scheme srfi-4)
+(import chicken scheme)
 (use glls-render (prefix glfw3 glfw:) (prefix opengl-glew gl:) gl-math gl-utils)
 
 ;;; VAO data
@@ -36,7 +36,9 @@
 (define model-matrix (mat4-identity))
 
 (define mvp (m* projection-matrix
-                (m* view-matrix model-matrix)))
+                (m* view-matrix model-matrix)
+                #t ; Matrix should be in a non-GC'd area
+                ))
 
 
 ;;; Pipeline definition
@@ -57,7 +59,7 @@
 (glfw:with-window (640 480 "Example" resizable: #f)
   (gl:init)
   (compile-pipelines)
-  (let ([vao (make-vao (f32vector->blob vertex-data) (u16vector->blob index-data)
+  (let ([vao (make-vao vertex-data index-data
                        `((,(pipeline-attribute 'vertex simple-shader) float: 2)
                          (,(pipeline-attribute 'color simple-shader) float: 3)))])
     (renderable (make-simple-shader-renderable
@@ -69,6 +71,7 @@
      (glfw:swap-buffers (glfw:window))
      (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
      (render-simple-shader (renderable))
+     (gl:check-error)
      (glfw:poll-events)
      (unless (glfw:window-should-close (glfw:window))
        (loop))))
