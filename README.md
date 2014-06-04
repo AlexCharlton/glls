@@ -323,7 +323,13 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
-### Version 0.3.2
+### Version 0.3.3
+4 June 2014
+
+- Bug fixes relating to dynamic reevaluated pipelines
+
+**Version 0.3.2**
+
 3 June 2014
 
 - Update examples for GC safety
