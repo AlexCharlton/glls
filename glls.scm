@@ -79,8 +79,7 @@
          [uniforms (apply append (map shader-uniforms shaders))]
          [pipeline (make-pipeline shaders attributes uniforms 0)])
     (set! *pipelines* (cons pipeline *pipelines*))
-    (set-finalizer! pipeline %delete-pipeline)
-    pipeline))
+    (set-finalizer! pipeline %delete-pipeline)))
 
 (define-syntax define-pipeline
   (ir-macro-transformer
@@ -113,12 +112,17 @@
                                 shaders)])
        (if (and (feature? csi:)
               (handle-exceptions e (begin #f) (eval name)))
-           `(begin
-              (define old-program (pipeline-program ,name))
-              (define ,name
-                (create-pipeline ,@shader-makers))
-              (set! (pipeline-program ,name) old-program)
-              (compile-pipelines))
+           ;; Protect against non shader with same name
+           `(if (pipeline? ,name)
+                (let ((old-program (pipeline-program ,name)))
+                  ;; Keep finalizer of old shader from deleting new one
+                  (set! (pipeline-program ,name) 0)
+                  (define ,name
+                    (create-pipeline ,@shader-makers))
+                  (set! (pipeline-program ,name) old-program)
+                  (compile-pipelines))
+                (define ,name
+                  (create-pipeline ,@shader-makers)))
            `(define ,name
               (create-pipeline ,@shader-makers)))))))
 
