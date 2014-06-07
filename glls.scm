@@ -178,7 +178,7 @@
   (let ([u (assoc uniform (pipeline-uniforms pipeline))])
     (unless u
       (error 'pipeline-uniform "No such uniform" uniform))
-    (when (< (length u) 3)
+    (when (not (list? u))
       (error 'pipeline-uniform "Pipeline has not been compiled" pipeline))
     (cadr u)))
 
@@ -186,7 +186,7 @@
   (let ([a (assoc attr (pipeline-attributes pipeline))])
     (unless a
       (error 'pipeline-attribute "No such attribute" attr))
-    (when (< (length a) 3)
+    (when (not (list? a))
       (error 'pipeline-attribute "Pipeline has not been compiled" pipeline))
     (cadr a)))
 
