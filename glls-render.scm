@@ -104,8 +104,7 @@
  (define-syntax define-pipeline
    (syntax-rules ()
      [(_ name  shaders ...)
-      (begin (use glls)
-             (glls:define-pipeline name shaders ...)
+      (begin (glls:define-pipeline name shaders ...)
              (define-renderable-functions name shaders ...))]
      [(_ . expr) (syntax-error 'define-pipeline "Invalide pipeline definition" expr)]))
 
