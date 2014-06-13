@@ -245,6 +245,10 @@ Additionally, `define-pipeline` defines a number of renderable setters for each 
 
 And for each uniform in the pipeline, `set-SHADER-NAME-renderable-UNIFORM-NAME!` is created.
 
+    [procedure] (renderable-size PIPELINE)
+
+Returns the size, in bytes, of the memory needed for a renderable belonging to `PIPELINE`.
+
 #### Fast render functions
 When compiled, the render function defined by `define-pipeline` is actually a combination of three “fast” render functions: a begin render function, a render function, and an end render function. This is done so that, if desired, all of the renderables that belong to the same pipeline may be rendered at the same time, without needing to perform expensive calls like program changes or texture binding more than once. To use these functions, simply call the begin render function with the first renderable, then call the render function on all renderables (including the first), finally calling the end render function (with no arguments) to clean up.
 
