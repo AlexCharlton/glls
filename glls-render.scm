@@ -6,7 +6,8 @@
 (use (prefix glls glls:) glls-renderable (prefix gl-utils gl:))
 (import-for-syntax (prefix glls glls:) glls-renderable matchable miscmacros)
 
-(reexport (except glls define-pipeline))
+(reexport (except glls define-pipeline)
+          (only glls-renderable allocate-renderable))
 
 (begin-for-syntax
  (require-library glls-renderable)

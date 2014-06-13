@@ -7,11 +7,13 @@
                          set-renderable-mode!
                          set-renderable-offset!
                          set-renderable-uniform-value!
-                         gllsRender.h)
+                         gllsRender.h
+                         allocate-renderable)
 
 (import glls chicken scheme foreign lolevel foreign irregex srfi-1 srfi-4 extras)
 (use glls-compiler fmt fmt-c miscmacros (prefix opengl-glew gl:))
 
+(foreign-declare "#include <math.h>")
 (foreign-declare "#include \"gllsRender.h\"")
 
 (define set-renderable-program!
@@ -122,9 +124,10 @@
      int *locations  = (int *) (values + (size * sizeof(void*)));
      C_return(locations[i]);"))
 
-(define allocate-renderable
-  (foreign-lambda* c-pointer ((int i))
-    "if (i <= 2) C_return(malloc(sizeof(GLLSrenderable2)));
+(define (allocate-renderable pipeline)
+  ((foreign-lambda* c-pointer ((int n))
+     "int i = pow(2, ceil(log(n)/log(2)));
+     if (i <= 2) C_return(malloc(sizeof(GLLSrenderable2)));
      else if (i <= 4) C_return(malloc(sizeof(GLLSrenderable4)));
      else if (i <= 8) C_return(malloc(sizeof(GLLSrenderable8)));
      else if (i <= 16) C_return(malloc(sizeof(GLLSrenderable16)));
@@ -134,7 +137,8 @@
      else if (i <= 256) C_return(malloc(sizeof(GLLSrenderable256)));
      else if (i <= 1024) C_return(malloc(sizeof(GLLSrenderable1024)));
      fprintf(stderr, \"Error GLLSrenerables cannot hold this many uniforms: ~d\\n\", i);
-     C_return(NULL);"))
+     C_return(NULL);")
+   (length (pipeline-uniforms pipeline))))
 
 (define (symbol->c-symbol sym)
   (define (cammel-case str)
@@ -352,14 +356,16 @@
   (inexact->exact (expt 2 (ceiling (/ (log n)
                                       (log 2))))))
 
+(define (renderable-size uniforms)
+  (next-power-of-two (if (>= (length uniforms) 2)
+                         (length uniforms)
+                         2)))
+
 (define (render-functions prefix name uniforms)
   (let* ([renderable-struct (string->symbol
                              (string-append
                               "GLLSrenderable"
-                              (number->string (next-power-of-two
-                                               (if (>= (length uniforms) 2)
-                                                   (length uniforms)
-                                                   2)))))]
+                              (number->string (renderable-size uniforms))))]
          [fun-name (symbol->c-symbol (symbol-append prefix
                                                     'render- name))]
          [fast-fun-name (symbol->c-symbol (symbol-append prefix
@@ -403,9 +409,7 @@
   (parameterize ([dynamic? #t])
     (let-values ([(uniform-binders sampler-binders sampler-unbinders)
                   (uniform-binders uniforms)]
-                 [(n) (next-power-of-two (if (>= (length uniforms) 2)
-                                   (length uniforms)
-                                   2))])
+                 [(n) (renderable-size uniforms)])
       (gl:use-program (get-renderable-program renderable))
       (for-each (lambda (b) (b renderable n)) uniform-binders)
       (for-each (lambda (b) (b renderable n)) sampler-binders)
@@ -429,11 +433,9 @@
                            (error 'make-renderable "Expected keyword argument"
                                   arg args)))))
   (let* ([uniforms (pipeline-uniforms pipeline)]
-         [n (next-power-of-two (if (>= (length uniforms) 2)
-                                   (length uniforms)
-                                   2))]
+         (n (renderable-size uniforms))
          [renderable (get-arg #:data (lambda ()
-                                       (set-finalizer! (allocate-renderable n)
+                                       (set-finalizer! (allocate-renderable pipeline)
                                                        free)))])
     (set-renderable-program! renderable (pipeline-program pipeline))
     (set-renderable-vao! renderable (get-arg #:vao))
