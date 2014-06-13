@@ -8,7 +8,7 @@
                          set-renderable-offset!
                          set-renderable-uniform-value!
                          gllsRender.h
-                         allocate-renderable)
+                         renderable-size)
 
 (import glls chicken scheme foreign lolevel foreign irregex srfi-1 srfi-4 extras)
 (use glls-compiler fmt fmt-c miscmacros (prefix opengl-glew gl:))
@@ -124,21 +124,24 @@
      int *locations  = (int *) (values + (size * sizeof(void*)));
      C_return(locations[i]);"))
 
-(define (allocate-renderable pipeline)
-  ((foreign-lambda* c-pointer ((int n))
+(define (renderable-size pipeline)
+  ((foreign-lambda* unsigned-int ((int n))
      "int i = pow(2, ceil(log(n)/log(2)));
-     if (i <= 2) C_return(malloc(sizeof(GLLSrenderable2)));
-     else if (i <= 4) C_return(malloc(sizeof(GLLSrenderable4)));
-     else if (i <= 8) C_return(malloc(sizeof(GLLSrenderable8)));
-     else if (i <= 16) C_return(malloc(sizeof(GLLSrenderable16)));
-     else if (i <= 32) C_return(malloc(sizeof(GLLSrenderable32)));
-     else if (i <= 64) C_return(malloc(sizeof(GLLSrenderable64)));
-     else if (i <= 128) C_return(malloc(sizeof(GLLSrenderable128)));
-     else if (i <= 256) C_return(malloc(sizeof(GLLSrenderable256)));
-     else if (i <= 1024) C_return(malloc(sizeof(GLLSrenderable1024)));
+     if (i <= 2) C_return(sizeof(GLLSrenderable2));
+     else if (i <= 4) C_return(sizeof(GLLSrenderable4));
+     else if (i <= 8) C_return(sizeof(GLLSrenderable8));
+     else if (i <= 16) C_return(sizeof(GLLSrenderable16));
+     else if (i <= 32) C_return(sizeof(GLLSrenderable32));
+     else if (i <= 64) C_return(sizeof(GLLSrenderable64));
+     else if (i <= 128) C_return(sizeof(GLLSrenderable128));
+     else if (i <= 256) C_return(sizeof(GLLSrenderable256));
+     else if (i <= 1024) C_return(sizeof(GLLSrenderable1024));
      fprintf(stderr, \"Error GLLSrenerables cannot hold this many uniforms: ~d\\n\", i);
-     C_return(NULL);")
+     C_return(0);")
    (length (pipeline-uniforms pipeline))))
+
+(define (allocate-renderable pipeline)
+  (allocate (renderable-size pipeline)))
 
 (define (symbol->c-symbol sym)
   (define (cammel-case str)

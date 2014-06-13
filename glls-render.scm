@@ -7,7 +7,7 @@
 (import-for-syntax (prefix glls glls:) glls-renderable matchable miscmacros)
 
 (reexport (except glls define-pipeline)
-          (only glls-renderable allocate-renderable))
+          (only glls-renderable renderable-size))
 
 (begin-for-syntax
  (require-library glls-renderable)
