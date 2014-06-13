@@ -359,7 +359,7 @@
   (inexact->exact (expt 2 (ceiling (/ (log n)
                                       (log 2))))))
 
-(define (renderable-size uniforms)
+(define (renderable-slots uniforms)
   (next-power-of-two (if (>= (length uniforms) 2)
                          (length uniforms)
                          2)))
@@ -368,7 +368,7 @@
   (let* ([renderable-struct (string->symbol
                              (string-append
                               "GLLSrenderable"
-                              (number->string (renderable-size uniforms))))]
+                              (number->string (renderable-slots uniforms))))]
          [fun-name (symbol->c-symbol (symbol-append prefix
                                                     'render- name))]
          [fast-fun-name (symbol->c-symbol (symbol-append prefix
@@ -412,7 +412,7 @@
   (parameterize ([dynamic? #t])
     (let-values ([(uniform-binders sampler-binders sampler-unbinders)
                   (uniform-binders uniforms)]
-                 [(n) (renderable-size uniforms)])
+                 [(n) (renderable-slots uniforms)])
       (gl:use-program (get-renderable-program renderable))
       (for-each (lambda (b) (b renderable n)) uniform-binders)
       (for-each (lambda (b) (b renderable n)) sampler-binders)
@@ -436,7 +436,7 @@
                            (error 'make-renderable "Expected keyword argument"
                                   arg args)))))
   (let* ([uniforms (pipeline-uniforms pipeline)]
-         (n (renderable-size uniforms))
+         (n (renderable-slots uniforms))
          [renderable (get-arg #:data (lambda ()
                                        (set-finalizer! (allocate-renderable pipeline)
                                                        free)))])
