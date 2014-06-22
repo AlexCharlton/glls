@@ -1,6 +1,7 @@
 (module glls-render (c-prefix
                      define-pipeline
-                     load-ply-renderable)
+                     load-ply-renderable
+                     export-pipeline)
 
 (import chicken scheme)
 (use (prefix glls glls:) glls-renderable (prefix gl-utils gl:))
@@ -102,12 +103,24 @@
                (renderable-setters ,name ,uniforms))))]
        [expr (syntax-error 'define-pipeline "Invalid pipeline definition" expr)]))))
 
- (define-syntax define-pipeline
-   (syntax-rules ()
-     [(_ name  shaders ...)
-      (begin (glls:define-pipeline name shaders ...)
-             (define-renderable-functions name shaders ...))]
-     [(_ . expr) (syntax-error 'define-pipeline "Invalide pipeline definition" expr)]))
+(define-syntax define-pipeline
+  (syntax-rules ()
+    [(_ name  shaders ...)
+     (begin (glls:define-pipeline name shaders ...)
+            (define-renderable-functions name shaders ...))]
+    [(_ . expr) (syntax-error 'define-pipeline "Invalide pipeline definition" expr)]))
+
+(define-syntax export-pipeline
+  (ir-macro-transformer
+   (lambda (expr i c)
+     (if (and (not (= (length expr) 2))
+            (symbol? (cadr expr)))
+         (syntax-error 'export-shader "Expected a pipeline name" expr))
+     (let* ((name (strip-syntax (cadr expr)))
+            (render (symbol-append 'render- name))
+            (make-renderable (symbol-append 'make- name '-renderable))
+            (fast-funs (symbol-append name '-fast-render-functions)))
+       `(export ,name ,render ,make-renderable ,fast-funs)))))
 
 (define (load-ply-renderable ply renderable-maker . args)
   (define (get-arg arg)
