@@ -257,6 +257,10 @@ When compiled, the render function defined by `define-pipeline` is actually a co
 One major assumption must be kept in mind while working with the fast render functions: textures are only bound once. In other words: it is assumed that that all of the renderables belonging to the same pipeline share a common “sprite sheet” (or other shared texture type). If this assumption does not hold true, simply use the standard render function, or call the begin render function for every set of renderables that uses a separate texture.
 
 #### Utilities
+    [macro] (export-pipeline PIPELINE)
+
+Since glls-render causes `define-pipeline` to define multiple functions, this macro exports everything related to `PIPELINE`.
+
     [procedure] (load-ply-renderable PLY RENDERABLE-MAKER . ARGS)
 
 Load the given PLY file and return a renderable. Returns three values: a renderable, the vertex data blob, and the index data blob.  `PLY` is a PLY file name such as those accepted by opengl-glew’s [`load-ply`](http://api.call-cc.org/doc/opengl-glew/load-ply). `RENDERABLE-MAKER` is the function used to construct the renderable of the desired pipeline. `ARGS` are the keyword arguments that must include `vertex:` and a `face:` arguments (as per [`load-ply-vao`](http://api.call-cc.org/doc/opengl-glew/load-ply-vao)) as well as arguments for each uniform (as per the renderable maker function).
