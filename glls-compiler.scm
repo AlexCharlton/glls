@@ -61,7 +61,7 @@
                    (c-expr `(%begin ,@sl ,(glsl->fmt body))))
               in out uni)))
   (match form
-    [(((? shader-type? shader-type) . keys) input body -> output)
+    [(((? shader-type? shader-type) . keys) input body '-> output)
      (apply compile shader-type input body output keys)]
     [_ (syntax-error "Poorly formed shader:" form)]))
 
@@ -147,7 +147,7 @@
 
 (define parameter
   (match-lambda
-   [(name (#:array (? type? type) . size))
+   [(name ((or '#:array 'array) (? type? type) . size))
     `((%array ,type . ,size) ,name)]
    [(name (? type? type))
     `(,type ,name)]
@@ -155,7 +155,7 @@
 
 (define assignment
   (match-lambda*
-   [(name (#:array (? type? type) . size) . init)
+   [(name ((or '#:array 'array) (? type? type) . size) . init)
     `(%var (%array ,type . ,size) ,name . ,init)]
    [(name (? type? type) . init)
     `(%var ,type ,name . ,init)]
