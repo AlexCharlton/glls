@@ -165,6 +165,8 @@
   (match-lambda*
    [(_ (name . params) (? type? return-type) body . body-rest)
     `(%fun ,return-type ,name ,(map parameter params) ,body . ,body-rest)]
+   [(_ (name . params) (? type? return-type))
+    `(%prototype ,return-type ,name ,(map parameter params))]
    [(_ . a) (apply assignment a)]))
 
 (define glsl:let
