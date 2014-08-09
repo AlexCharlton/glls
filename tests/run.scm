@@ -33,15 +33,15 @@
                         ((< x 0) (set! y 1))
                         ((< x 5) (set! y 2))
                         (else (set! y 3)))))
-  (test "vec3 foo (int x[], int y) {\n    x = y;\n    return bar;\n}\n"
+  (test "vec3 foo (in int x, int y) {\n    x = y;\n    return bar;\n}\n"
         (compile-expr '(define (foo (x (in: #:int)) (y #:int)) #:vec3
                   (set! x y)
                   bar)))
-  (test "for (int i = 0; (< i 5); ++i) {\n    foo(i);\n}\n"
+  (test "for (int i = 0; i < 5; ++i) {\n    foo(i);\n}\n"
         (compile-expr '(do-times (i 5)
                                 (foo i))))
-  (test "while ((< i 4)) {\n    if (thing) {\n        break;\n    }\n    foo(i);\n}\n"
-        (compile-expr '(while (< i 4)
+  (test "while (i > 4) {\n    if (thing) {\n        break;\n    }\n    foo(i);\n}\n"
+        (compile-expr '(while (> i 4)
                          (if thing (break))
                          (foo i))))
   
@@ -49,9 +49,9 @@
 
   (test "vec4(position, 0.0, 1.0);\n"
         (compile-expr '(vec4 position 0.0 1.0)))
-  (test "for (int i = 2; (< i 4); ++i) {\n    break;\n}\n"
+  (test "for (int i = 2; i < 4; ++i) {\n    break;\n}\n"
         (compile-expr '(do-times (i 2 4) (break))))
-  (test "for (i = 0; (< i 4); ++i) {\n    break;\n}\n"
+  (test "for (i = 0; i < 4; ++i) {\n    break;\n}\n"
         (compile-expr '(for (set! i 0) (< i 4) (++ i) (break))))
   (test "struct foo {\n    int x;\n    int y[];\n};\n"
         (compile-expr '(define-record foo (x int:) (y (array: int:)))))
