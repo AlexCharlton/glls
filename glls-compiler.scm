@@ -198,6 +198,7 @@
      (eq? . ,(replace '==))
      (= . ,(replace '==))
      (set! . ,(replace '=))
+     (-= . ,(replace '-=)) ; Why does this need to be here?
      (and . ,(replace '&&))
      (or . ,(replace '%or))
      (not . ,(replace '!))
