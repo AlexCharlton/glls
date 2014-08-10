@@ -51,10 +51,11 @@
    (lambda (exp rename compare)
      (let* ([name (cadr exp)]
            [shader (%create-shader (strip-syntax (cddr exp)))]
-           [shader-maker `(make-shader
+           [shader-maker `(%make-shader
                            ,(shader-type shader)
                            ,(shader-source shader) ',(shader-inputs shader)
                            ',(shader-outputs shader) ',(shader-uniforms shader)
+                           (list ,@(shader-imports shader)) ',(shader-exports shader)
                            0)])
        `(define ,name (set-finalizer! ,shader-maker %delete-shader))))))
 
@@ -70,7 +71,7 @@
                          (if (shader? s)
                              s
                              (create-shader s)))
-                       shaders)]
+                       (append shaders (append-map shader-imports shaders)))]
          [attributes (apply append
                             (map shader-inputs
                                  (filter (lambda (s)
@@ -102,10 +103,11 @@
             [shader-makers (map (lambda (s)
                                   (if (shader? s)
                                       `(set-finalizer!
-                                        (make-shader
+                                        (%make-shader
                                          ,(shader-type s)
                                          ,(shader-source s) ',(shader-inputs s)
                                          ',(shader-outputs s) ',(shader-uniforms s)
+                                         (list ,@(shader-imports s)) '()
                                          0)
                                         %delete-shader)
                                       s))

@@ -12,8 +12,11 @@
    shader-inputs
    shader-outputs
    shader-uniforms
+   shader-imports
+   shader-exports
    shader-program
    make-shader
+   %make-shader
    %create-shader)
 
 (import chicken scheme data-structures srfi-1 srfi-69)
@@ -22,22 +25,30 @@
 
 ;;; Shader record
 (define-record shader
-  type source inputs outputs uniforms (setter program))
+  type source inputs outputs uniforms imports exports (setter program))
 
 (define-record-printer (shader s out)
-  (fprintf out "#,(shader ~S ~S '~S '~S '~S ~S)"
+  (fprintf out "#,(shader ~S ~S '~S '~S '~S '~S '~S ~S)"
            (shader-type s)  (shader-source s)
            (shader-inputs s) (shader-outputs s) (shader-uniforms s)
+           (shader-imports s) (shader-exports s)
            (shader-program s)))
 
 (define (%create-shader form #!key [inputs '()])
-  (let-values ([(s i o u) (compile-glls form inputs: inputs)])
-    (make-shader (caar form) s i o u 0)))
+  (let-values ([(s i o u im ex) (compile-glls form inputs: inputs)])
+    (make-shader (caar form) s i o u im ex 0)))
+
+(define (%make-shader type source inputs outputs uniforms imports exports program)
+  (make-shader type (irregex-replace "<<imports>>" source
+                                     (apply string-append (map shader-exports imports)))
+               inputs outputs uniforms imports exports program))
 
 (define shader-types
   '(#:vertex #:fragment #:geometry #:tess-control #:tess-evaluation #:compute))
 
 (define glsl-version (make-parameter 330))
+(define exports (make-parameter '()))
+(define export-prototypes (make-parameter '()))
 
 ;;; Main compiling function
 ;; Takes a form with the glls syntax and returns values:
@@ -47,19 +58,26 @@
 ;; - A list of the uniforms (string-name symbol-type)
 (define (compile-glls form #!key [inputs '()])
   (define (shader-type? s) (member s shader-types))
-  (define (compile type input body output
-                   #!key [version (glsl-version)] [extensions '()] [pragmas '()])
-    (let-values ([(sl in out uni) (compile-inputs (append inputs input) output
-                                                  version type)])
-      (values (fmt #f "#version " (number->string version) "\n\n"
-                   (fmt-join dsp
-                          (list-ec (: e extensions)
-                                   (fmt #f "#extension " e  #\newline)))
-                   (fmt-join dsp
-                             (list-ec (: p pragmas)
-                                      (fmt #f "#pragma " p #\newline)))
-                   (c-expr `(%begin ,@sl ,(glsl->fmt body))))
-              in out uni)))
+  (define (compile type input body output #!key
+                   (version (glsl-version)) (extensions '()) (pragmas '())
+                   (use '()) (export '()))
+    (parameterize ((exports export) (export-prototypes '()))
+      (let-values ([(sl in out uni) (compile-inputs (append inputs input) output
+                                                    version type)])
+        (values (fmt #f "#version " (number->string version) "\n\n"
+                     (fmt-join dsp
+                               (list-ec (: e extensions)
+                                        (fmt #f "#extension " e  #\newline)))
+                     (fmt-join dsp
+                               (list-ec (: p pragmas)
+                                        (fmt #f "#pragma " p #\newline)))
+                     (if (null? use)
+                         ""
+                         "<<imports>>\n")
+                     (c-expr `(%begin ,@sl ,(glsl->fmt body))))
+                in out uni use (apply string-append
+                                (map (lambda (p) (fmt #f (c-expr p)))
+                                     (export-prototypes)))))))
   (match form
     [(((? shader-type? shader-type) . keys) input body '-> output)
      (apply compile shader-type input body output keys)]
@@ -156,14 +174,26 @@
 (define assignment
   (match-lambda*
    [(name ((or '#:array 'array) (? type? type) . size) . init)
+    (when (member name (exports))
+      (export-prototypes
+       (cons `(%var (%array ,type . ,size) ,name)
+             (export-prototypes))))
     `(%var (%array ,type . ,size) ,name . ,init)]
    [(name (? type? type) . init)
+    (when (member name (exports))
+      (export-prototypes
+       (cons `(%var ,type ,name)
+             (export-prototypes))))
     `(%var ,type ,name . ,init)]
    [expr (syntax-error "Poorly formed assignment:" expr)]))
 
 (define glsl:define
   (match-lambda*
    [(_ (name . params) (? type? return-type) body . body-rest)
+    (when (member name (exports))
+      (export-prototypes
+       (cons `(%prototype ,return-type ,name ,(map parameter params))
+             (export-prototypes))))
     `(%fun ,return-type ,name ,(map parameter params) ,body . ,body-rest)]
    [(_ (name . params) (? type? return-type))
     `(%prototype ,return-type ,name ,(map parameter params))]
