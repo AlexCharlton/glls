@@ -88,7 +88,7 @@ Return the location of `ATTRIBUTE`. The `PIPELINE` must be compiled before this 
 The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. expect – have the following syntax:
 
     (<type> [version: <version>] [extensions: <extensions>] [pragmas: <pragmas>]
-            [use: <imports>] [export <exports]) 
+            [use: <imports>] [export: <exports]) 
       <inputs> <body> -> <outputs>
 
 `type` is the keyword type of the shader. It must be one of `#:vertex`, `#:fragment`, `#:geometry`, `#:tess-control`, `#:tess-evaluation`, or `#:compute`.
@@ -208,6 +208,8 @@ The following forms can be used to add pre-processor directives:
     (%ifndef <value> <true> [<false>])
 
 ### Shaders that export
+It is often desirable to have shaders that contain generic, reusable functions. These shaders are linked into the pipeline (or program, in GLSL parlance) so that they can be accessed by other shaders. In order for another shader to reuse a function, it first has to (as in C) include a function prototype. glsl automates this process.
+
 glls lets you define shaders that export symbols through the use of the [`export` keyword](#shader-syntax). These shaders can then be imported by others (through the [`use` keyword](#shader-syntax)). Prototypes are automatically generated for top-level functions or variables whose names match the symbols in the `export` keyword list. These prototypes are then inserted into shaders that `use` the exporting shader. Shaders that are `use`d by another are automatically linked into the resulting pipeline.
 
 Shaders that export should not have any inputs or outputs.
