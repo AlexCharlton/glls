@@ -157,7 +157,7 @@ Defines the variable `name`. When `type` is an array, a vector literal (eg. `#(1
 
     (define (<name> [(<parameter> <type>) ...]) <return-type> <body> ...)
 
-Defines the function `name`. The last expression in the body of a non-void function is automatically returned. 
+Defines the function `name`. The last expression in the body of a non-void function is automatically returned. If `body` is omitted, a function prototype is created.
 
     (let ((<name> <type> [<value>]) ...) <body> ...)
 
@@ -345,6 +345,17 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
+### Version 0.4.0
+11 August 2014
+
+- Add shader exports
+- Add function prototyping
+- Add `export-pipeline`
+- Add aliases to `field`, `swizzle` (`..`, `~~`)
+- Export `renderable-size` rather than `allocate-renderable`
+- Improve error messages
+- Bug fixes
+
 ### Version 0.3.3
 4 June 2014
 
