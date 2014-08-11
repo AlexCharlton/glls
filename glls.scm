@@ -65,19 +65,22 @@
 (define *pipelines* '())
 
 (define (create-pipeline . shaders)
+  (define (get-imports shader)
+    (let ((imports (shader-imports shader)))
+      (apply append imports
+             (map get-imports imports))))
   (if (< (length shaders) 2)
       (syntax-error "Invalid pipeline definition:" shaders))
   (let* ([shaders (map (lambda (s)
                          (if (shader? s)
                              s
                              (create-shader s)))
-                       (append shaders (append-map shader-imports shaders)))]
-         [attributes (apply append
-                            (map shader-inputs
+                       (append shaders (append-map get-imports shaders)))]
+         [attributes (append-map shader-inputs
                                  (filter (lambda (s)
                                            (equal? (shader-type s) #:vertex))
-                                         shaders)))]
-         [uniforms (apply append (map shader-uniforms shaders))]
+                                         shaders))]
+         [uniforms (append-map shader-uniforms shaders)]
          [pipeline (make-pipeline shaders attributes uniforms 0)])
     (set! *pipelines* (cons pipeline *pipelines*))
     (set-finalizer! pipeline %delete-pipeline)))
