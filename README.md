@@ -87,16 +87,21 @@ Return the location of `ATTRIBUTE`. The `PIPELINE` must be compiled before this 
 #### Shader syntax
 The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. expect – have the following syntax:
 
-    (<type> [version: <version>] [extensions: <extension>] [pragmas: <pragma>]) 
+    (<type> [version: <version>] [extensions: <extensions>] [pragmas: <pragmas>]
+            [use: <imports>] [export <exports]) 
       <inputs> <body> -> <outputs>
 
 `type` is the keyword type of the shader. It must be one of `#:vertex`, `#:fragment`, `#:geometry`, `#:tess-control`, `#:tess-evaluation`, or `#:compute`.
 
 `version` is the integer version number of the shader, i.e. the number you would write at the top of the shader source (e.g. `#version 410`). Defaults to the `glsl-version` parameter.
 
-`extensions` is the list of GLSL extensions desired (in string form). E.g. `'("GL_EXT_gpu_shader4 : enable")`. Defaults to `'()`
+`extensions` is the list of GLSL extensions desired (in string form). E.g. `("GL_EXT_gpu_shader4 : enable")`. Defaults to `()`
 
-`pragmas` is the list of GLSL pragmas desired (in string form). E.g. `'("optimize(on)")`. Defaults to `'()`
+`pragmas` is the list of GLSL pragmas desired (in string form). E.g. `("optimize(on)")`. Defaults to `()`
+
+`imports` is the list of shaders that the current shader depends on. See the section [Shaders that export](#shaders-that-export) for more details. Defaults to `()`
+
+`exports` is the list of symbols that the current shader exports. See the section [Shaders that export](#shaders-that-export) for more details. Defaults to `()`
 
 `inputs` is a list of the input variables to the shader. These are given in `(name type)` lists. The keyword `uniform:` may be used, and all following inputs will be uniforms. E.g.: `((vertex #:vec2) (color #:vec3) uniform: (view-matrix #:mat4))`
 
@@ -138,8 +143,8 @@ The following is a mapping between glls aliases for GLSL functions and operators
 * `bitwise-xor`, `bit-xor`: `^`
 * `bitwise-not`, `bit-not`: `~`
 * `arithmetic-shift`: `<<`
-* `field`: `.` (struct field reference, e.g. `(field point x)` → `point.x`)
-* `swizzle`: `.` (vector swizzling, e.g. `(swizzle color r g)` → `color.rg`)
+* `field`, `..`: `.` (struct field reference, e.g. `(field point x)` → `point.x`)
+* `swizzle`, `~~`: `.` (vector swizzling, e.g. `(swizzle color r g)` → `color.rg`)
 * `array-ref`, `vector-ref`: `[]` (array reference, e.g. `(array-ref a 4)` → `a[4]`)
 * `length`: `.length()` (vector length, e.g. `(length vec)` → `vec.length()`)
 
@@ -201,6 +206,13 @@ The following forms can be used to add pre-processor directives:
     (%ifdef <value> <true> [<false>])
 
     (%ifndef <value> <true> [<false>])
+
+### Shaders that export
+glls lets you define shaders that export symbols through the use of the [`export` keyword](#shader-syntax). These shaders can then be imported by others (through the [`use` keyword](#shader-syntax)). Prototypes are automatically generated for top-level functions or variables whose names match the symbols in the `export` keyword list. These prototypes are then inserted into shaders that `use` the exporting shader. Shaders that are `use`d by another are automatically linked into the resulting pipeline.
+
+Shaders that export should not have any inputs or outputs.
+
+See the example [exports.scm](https://github.com/AlexCharlton/glls/blob/master/examples/exports.scm) to see this in action.
 
 ### Automatic render functions
 By using the `glls-render` module, you can have glls automatically generate a function that will render an object with your glls shader. `glls-render` exports a new `define-pipeline` that defines a set of functions used for rendering and managing the objects that will be rendered. `glls-render` should not be used with the `glls` module: It reexports everything that you need from `glls`.
