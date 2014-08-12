@@ -345,7 +345,13 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
-### Version 0.4.0
+### Version 0.4.1
+12 August 2014
+
+- Fix export name matching
+
+**Version 0.4.0**
+
 11 August 2014
 
 - Add shader exports
