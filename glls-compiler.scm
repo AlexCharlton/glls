@@ -61,7 +61,8 @@
   (define (compile type input body output #!key
                    (version (glsl-version)) (extensions '()) (pragmas '())
                    (use '()) (export '()))
-    (parameterize ((exports export) (export-prototypes '()))
+    (parameterize ((exports (map symbol->glsl export))
+                   (export-prototypes '()))
       (let-values ([(sl in out uni) (compile-inputs (append inputs input) output
                                                     version type)])
         (values (fmt #f "#version " (number->string version) "\n\n"
