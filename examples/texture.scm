@@ -45,20 +45,24 @@
 
 ;;; Pipeline definition
 (define-pipeline sprite-shader
-  ((#:vertex) ((vertex #:vec2) (tex-coord #:vec2) #:uniform (mvp #:mat4))
-     (define (main) #:void
-       (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
-       (set! tex-c tex-coord))
-     -> ((tex-c #:vec2)))
-  ((#:fragment) ((tex-c #:vec2) #:uniform (tex #:sampler-2d))
-     (define (main) #:void
-       (set! frag-color (texture tex tex-c)))
-     -> ((frag-color #:vec4))))
+  ((#:vertex input: ((vertex #:vec2) (tex-coord #:vec2))
+             uniform: ((mvp #:mat4))
+             output: ((tex-c #:vec2))) 
+   (define (main) #:void
+     (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
+     (set! tex-c tex-coord)))
+  ((#:fragment input: ((tex-c #:vec2))
+               uniform: ((tex #:sampler-2d))
+               output: ((frag-color #:vec4)))
+   (define (main) #:void
+     (set! frag-color (texture tex tex-c)))))
 
 (define renderable (make-parameter #f))
 
 ;;; Initialization and main loop
-(glfw:with-window (640 480 "Example" resizable: #f)
+(glfw:with-window (640 480 "Example" resizable: #f
+                       context-version-major: 3
+                       context-version-minor: 3)
   (gl:init)
   (compile-pipelines)
   (let ([vao (make-vao vertex-data index-data

@@ -71,15 +71,17 @@
 
 ;;; Rendering
 (define-pipeline phong-shader 
-  ((#:vertex) ((vertex #:vec3) (normal #:vec3)
-               #:uniform (mvp #:mat4) (model #:mat4) (inv-transpose-model #:mat4))
-     (define (main) #:void
-       (set! gl:position (* mvp (vec4 vertex 1.0)))
-       (set! p (vec3 (* model (vec4 vertex 1))))
-       (set! n (- ; Normals facing in for this model
-                (normalize (vec3 (* inv-transpose-model (vec4 normal 0)))))))
-     -> ((p #:vec3) (n #:vec3)))
-  ((#:fragment) ((n #:vec3) (p #:vec3) #:uniform (camera-position #:vec3))
+  ((#:vertex input: ((vertex #:vec3) (normal #:vec3))
+             uniform: ((mvp #:mat4) (model #:mat4) (inv-transpose-model #:mat4))
+             output: ((p #:vec3) (n #:vec3)))
+   (define (main) #:void
+     (set! gl:position (* mvp (vec4 vertex 1.0)))
+     (set! p (vec3 (* model (vec4 vertex 1))))
+     (set! n (- ; Normals facing in for this model
+              (normalize (vec3 (* inv-transpose-model (vec4 normal 0))))))))
+  ((#:fragment input: ((n #:vec3) (p #:vec3))
+               uniform: ((camera-position #:vec3))
+               output: ((frag-color #:vec4)))
    (let ((light-position #:vec3 (vec3 0 0 2))
          (light-diffuse #:vec3 (vec3 0.7 0.7 0.7))
          (light-specular #:vec3 (vec3 1 1 1))
@@ -99,9 +101,8 @@
               (specular-intensity #:vec3 (* light-specular surface-specular
                                             (expt spec specular-exponent))))
          (set! frag-color
-               (vec4 (+ ambient-intensity diffuse-intensity specular-intensity)
-                     (swizzle n x))))))
-   -> ((frag-color #:vec4))))
+           (vec4 (+ ambient-intensity diffuse-intensity specular-intensity)
+                 (swizzle n x))))))))
 
 (define renderable (make-parameter #f))
 
