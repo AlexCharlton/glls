@@ -22,8 +22,8 @@
   (ir-macro-transformer
    (lambda (exp i compare)
      (match exp
-      [(_ name uniforms)
-       (let ([base-name (symbol-append 'set- name '-renderable-)])
+      ((_ name uniforms)
+       (let ((base-name (symbol-append 'set- name '-renderable-)))
          `(begin
             (define (,(symbol-append base-name 'vao!) renderable vao)
               (set-renderable-vao! renderable vao))
@@ -35,14 +35,14 @@
               (set-renderable-mode! renderable mode))
             (define (,(symbol-append base-name 'offset!) renderable offset)
               (set-renderable-offset! renderable offset))
-            ,@(let loop ([uniforms uniforms] [i 0])
+            ,@(let loop ((uniforms uniforms) (i 0))
                 (if (null? uniforms)
                     '()
                     (cons `(define (,(symbol-append base-name (caar uniforms) '!)
                                     renderable value)
                              (set-renderable-uniform-value! renderable ,i value))
-                          (loop (cdr uniforms) [add1 i]))))))]
-       [exp (syntax-error 'renderable-setters "Bad arguments" exp)]))))
+                          (loop (cdr uniforms) (add1 i))))))))
+       (exp (syntax-error 'renderable-setters "Bad arguments" exp))))))
 
 (define-for-syntax (get-uniforms s)
   (cond
@@ -58,14 +58,14 @@
   (ir-macro-transformer
    (lambda (exp i compare)
      (match exp
-       [(_ name . shaders)
-        (let* ([name (strip-syntax name)]
-               [uniforms (concatenate (map get-uniforms (strip-syntax shaders)))])
-          (let-values ([(render-funs render-fun-name fast-fun-begin-name
+       ((_ name . shaders)
+        (let* ((name (strip-syntax name))
+               (uniforms (concatenate (map get-uniforms (strip-syntax shaders)))))
+          (let-values (((render-funs render-fun-name fast-fun-begin-name
                                      fast-fun-name fast-fun-end-name)
                         (if (feature? compiling:)
                             (render-functions (c-prefix) name uniforms)
-                            (values #f #f #f #f #f))])
+                            (values #f #f #f #f #f))))
             `(begin
                ,(if (feature? compiling:)
                     `(begin
@@ -99,15 +99,15 @@
                        (render-renderable ',uniforms renderable)))
                (define (,(symbol-append 'make- name '-renderable) . args)
                  (apply make-renderable ,name args))
-               (renderable-setters ,name ,uniforms))))]
-       [expr (syntax-error 'define-pipeline "Invalid pipeline definition" expr)]))))
+               (renderable-setters ,name ,uniforms)))))
+       (expr (syntax-error 'define-pipeline "Invalid pipeline definition" expr))))))
 
 (define-syntax define-pipeline
   (syntax-rules ()
-    [(_ name  shaders ...)
+    ((_ name  shaders ...)
      (begin (glls:define-pipeline name shaders ...)
-            (define-renderable-functions name shaders ...))]
-    [(_ . expr) (syntax-error 'define-pipeline "Invalide pipeline definition" expr)]))
+            (define-renderable-functions name shaders ...)))
+    ((_ . expr) (syntax-error 'define-pipeline "Invalide pipeline definition" expr))))
 
 (define-syntax export-pipeline
   (ir-macro-transformer
@@ -126,10 +126,10 @@
     (get-keyword arg args
                  (lambda () (error 'load-vao-renderable "Expected keyword argument"
                               arg args))))
-  (let-values ([(vao vertex-data index-data n-verts mode element-type)
+  (let-values (((vao vertex-data index-data n-verts mode element-type)
                 (gl:load-ply-vao ply
                                  vertex: (get-arg vertex:)
-                                 face: (get-arg face:))])
+                                 face: (get-arg face:))))
     (values (apply renderable-maker
                    n-elements: n-verts
                    element-type: element-type

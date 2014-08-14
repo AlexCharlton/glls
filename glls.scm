@@ -49,14 +49,14 @@
 (define-syntax define-shader
   (ir-macro-transformer
    (lambda (exp rename compare)
-     (let* ([name (cadr exp)]
-           [shader (%create-shader (strip-syntax (cddr exp)))]
-           [shader-maker `(%make-shader
-                           ,(shader-type shader)
-                           ,(shader-source shader) ',(shader-inputs shader)
-                           ',(shader-outputs shader) ',(shader-uniforms shader)
-                           (list ,@(shader-imports shader)) ',(shader-exports shader)
-                           0)])
+     (let* ((name (cadr exp))
+            (shader (%create-shader (strip-syntax (cddr exp))))
+            (shader-maker `(%make-shader
+                            ,(shader-type shader)
+                            ,(shader-source shader) ',(shader-inputs shader)
+                            ',(shader-outputs shader) ',(shader-uniforms shader)
+                            (list ,@(shader-imports shader)) ',(shader-exports shader)
+                            0)))
        `(define ,name (set-finalizer! ,shader-maker %delete-shader))))))
 
 (define (create-shader form)
@@ -71,18 +71,18 @@
              (map get-imports imports))))
   (if (< (length shaders) 2)
       (syntax-error "Invalid pipeline definition:" shaders))
-  (let* ([shaders (map (lambda (s)
+  (let* ((shaders (map (lambda (s)
                          (if (shader? s)
                              s
                              (create-shader s)))
                        (append shaders (delete-duplicates
-                                        (append-map get-imports shaders))))]
-         [attributes (append-map shader-inputs
+                                        (append-map get-imports shaders)))))
+         (attributes (append-map shader-inputs
                                  (filter (lambda (s)
                                            (equal? (shader-type s) #:vertex))
-                                         shaders))]
-         [uniforms (append-map shader-uniforms shaders)]
-         [pipeline (make-pipeline shaders attributes uniforms 0)])
+                                         shaders)))
+         (uniforms (append-map shader-uniforms shaders))
+         (pipeline (make-pipeline shaders attributes uniforms 0)))
     (set! *pipelines* (cons pipeline *pipelines*))
     (set-finalizer! pipeline %delete-pipeline)))
 
@@ -91,20 +91,20 @@
    (lambda (exp i compare)
      (if (< (length exp) 3)
          (syntax-error "Invalid pipeline definition:" exp))
-     (let* ([new-shader? (lambda (s) (and (list? s)
+     (let* ((new-shader? (lambda (s) (and (list? s)
                                    (list? (car s))
-                                   (member (caar s) shader-types compare)))]
-            [shader-with-uniforms? (lambda (s) (and (list? s)
+                                   (member (caar s) shader-types compare))))
+            (shader-with-uniforms? (lambda (s) (and (list? s)
                                              (>= (length s) 2)
-                                             (equal? (second s) uniform:)))]
-            [name (cadr exp)]
-            [shaders (map (lambda (s)
+                                             (equal? (second s) uniform:))))
+            (name (cadr exp))
+            (shaders (map (lambda (s)
                             (cond
-                             [(new-shader? s) (%create-shader s)]
-                             [(shader-with-uniforms? s) (car s)]
-                             [else s]))
-                          (strip-syntax (cddr exp)))]
-            [shader-makers (map (lambda (s)
+                             ((new-shader? s) (%create-shader s))
+                             ((shader-with-uniforms? s) (car s))
+                             (else s)))
+                          (strip-syntax (cddr exp))))
+            (shader-makers (map (lambda (s)
                                   (if (shader? s)
                                       `(set-finalizer!
                                         (%make-shader
@@ -115,7 +115,7 @@
                                          0)
                                         %delete-shader)
                                       s))
-                                shaders)])
+                                shaders)))
        (if (and (feature? csi:)
               (handle-exceptions e (begin #f) (eval name)))
            ;; Protect against non shader with same name
@@ -137,35 +137,35 @@
 (define (compile-shader shader)
   (define (shader-int-type shader)
     (ecase (shader-type shader)
-           [(vertex:) gl:+vertex-shader+]
-           [(tess-control:) gl:+tess-control-shader+]
-           [(tess-evaluation:) gl:+tess-evaluation-shader+]
-           [(geometry:) gl:+geometry-shader+]
-           [(fragment:) gl:+fragment-shader+]
-           [(compute:) gl:+compute-shader+]))
+           ((vertex:) gl:+vertex-shader+)
+           ((tess-control:) gl:+tess-control-shader+)
+           ((tess-evaluation:) gl:+tess-evaluation-shader+)
+           ((geometry:) gl:+geometry-shader+)
+           ((fragment:) gl:+fragment-shader+)
+           ((compute:) gl:+compute-shader+)))
   (when (zero? (shader-program shader))
     (set! (shader-program shader) (gl:make-shader (shader-int-type shader) (shader-source shader)))))
 
 (define (compile-pipeline pipeline)
   (for-each compile-shader (pipeline-shaders pipeline))
-  (let* ([program (gl:make-program (map shader-program (pipeline-shaders pipeline))
+  (let* ((program (gl:make-program (map shader-program (pipeline-shaders pipeline))
                                    (if (> (pipeline-program pipeline) 0)
                                        (pipeline-program pipeline)
-                                       (gl:create-program)))]
-         [attribute-location
+                                       (gl:create-program))))
+         (attribute-location
           (lambda (a)
-            (match-let* ([(name . type) a]
-                         [location (gl:get-attrib-location
+            (match-let* (((name . type) a)
+                         (location (gl:get-attrib-location
                                     program
-                                    (symbol->string (symbol->glsl name)))])
-              (list name location type)))]
-         [uniform-location
+                                    (symbol->string (symbol->glsl name)))))
+              (list name location type))))
+         (uniform-location
           (lambda (u)
-            (match-let* ([(name . type) u]
-                         [location (gl:get-uniform-location
+            (match-let* (((name . type) u)
+                         (location (gl:get-uniform-location
                                     program
-                                    (symbol->string (symbol->glsl name)))])
-              (list name location type)))])
+                                    (symbol->string (symbol->glsl name)))))
+              (list name location type)))))
     (for-each (lambda (s)
                 (gl:detach-shader program (shader-program s)))
               (pipeline-shaders pipeline))
@@ -181,7 +181,7 @@
 
 ;; Accessors
 (define (pipeline-uniform uniform pipeline)
-  (let ([u (assoc uniform (pipeline-uniforms pipeline))])
+  (let ((u (assoc uniform (pipeline-uniforms pipeline))))
     (unless u
       (error 'pipeline-uniform "No such uniform" uniform))
     (when (not (list? u))
@@ -189,7 +189,7 @@
     (cadr u)))
 
 (define (pipeline-attribute attr pipeline)
-  (let ([a (assoc attr (pipeline-attributes pipeline))])
+  (let ((a (assoc attr (pipeline-attributes pipeline))))
     (unless a
       (error 'pipeline-attribute "No such attribute" attr))
     (when (not (list? a))

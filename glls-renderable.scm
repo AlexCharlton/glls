@@ -48,32 +48,32 @@
 
 (define (set-renderable-uniform-value! data i value)
   (cond
-   [(f32vector? value)
+   ((f32vector? value)
     ((foreign-lambda* void
          ((c-pointer data) (int i) (f32vector value))
        "GLLSrenderable1024 *renderable = (GLLSrenderable1024 *) data;
-        renderable->uniformValues[i] = value;") data i value)]
-   [(s32vector? value)
+        renderable->uniformValues[i] = value;") data i value))
+   ((s32vector? value)
     ((foreign-lambda* void
          ((c-pointer data) (int i) (s32vector value))
        "GLLSrenderable1024 *renderable = (GLLSrenderable1024 *) data;
-        renderable->uniformValues[i] = value;") data i value)]
-   [(u32vector? value)
+        renderable->uniformValues[i] = value;") data i value))
+   ((u32vector? value)
     ((foreign-lambda* void
          ((c-pointer data) (int i) (u32vector value))
        "GLLSrenderable1024 *renderable = (GLLSrenderable1024 *) data;
-        renderable->uniformValues[i] = value;") data i value)]
-   [(pointer? value)
+        renderable->uniformValues[i] = value;") data i value))
+   ((pointer? value)
     ((foreign-lambda* void
          ((c-pointer data) (int i) (c-pointer value))
        "GLLSrenderable1024 *renderable = (GLLSrenderable1024 *) data;
-        renderable->uniformValues[i] = value;") data i value)]
-   [(fixnum? value)
+        renderable->uniformValues[i] = value;") data i value))
+   ((fixnum? value)
     ((foreign-lambda* void
          ((c-pointer data) (int i) (int value))
        "GLLSrenderable1024 *renderable = (GLLSrenderable1024 *) data;
-       renderable->uniformValues[i] = (void *) value;") data i value)]
-   [else (error 'set-renderable-uniform-value! "Invalid type" value)]))
+       renderable->uniformValues[i] = (void *) value;") data i value))
+   (else (error 'set-renderable-uniform-value! "Invalid type" value))))
 
 (define set-renderable-uniform-location!
   (foreign-lambda* void ((c-pointer data) (int size) (int i) (int location))
@@ -147,9 +147,9 @@
   (define (cammel-case str)
     (irregex-replace/all "[:-](.)" str
                          (lambda (m)
-                           (let* ([s (irregex-match-substring m)]
-                                  [char1 (string-ref s 0)]
-                                  [char2 (char-upcase (string-ref s 1))])
+                           (let* ((s (irregex-match-substring m))
+                                  (char1 (string-ref s 0))
+                                  (char2 (char-upcase (string-ref s 1))))
                              (if (equal? char1 #\:)
                                  (string #\_ char2)
                                  (string char2))))))
@@ -157,15 +157,15 @@
     (irregex-replace/all '(: bos num)
                          (irregex-replace/all '(~ (or alphanum "_")) str "")
                          ""))
-  (let ([str (symbol->string sym)])
+  (let ((str (symbol->string sym)))
     (string->symbol (strip-illegal-chars (cammel-case str)))))
 
 (define-syntax def-glls-render
   (ir-macro-transformer
    (lambda (e r c)
-     (let ([glls-render (with-input-from-file "gllsRender.h"
+     (let ((glls-render (with-input-from-file "gllsRender.h"
                           (lambda ()
-                            (read-string)))])
+                            (read-string)))))
        `(define gllsRender.h ,glls-render)))))
 
 (def-glls-render)
@@ -173,7 +173,7 @@
 (define-syntax define-uniform
   (ir-macro-transformer
    (lambda (e r c)
-     (let ([name (strip-syntax (cadr e))])
+     (let ((name (strip-syntax (cadr e))))
        `(define ,name
           (foreign-lambda* void
               ((unsigned-int loc) (unsigned-int count) (c-pointer value))
@@ -183,7 +183,7 @@
 (define-syntax define-uniform-matrix
   (ir-macro-transformer
    (lambda (e r c)
-     (let ([name (strip-syntax (cadr e))])
+     (let ((name (strip-syntax (cadr e))))
        `(define ,name
           (foreign-lambda* void
               ((unsigned-int loc) (unsigned-int count) (c-pointer value))
@@ -218,66 +218,66 @@
   (define (dynamic/static d s)
     (if (dynamic?) d s))
   (case (symbol->glsl type)
-    [(float) (dynamic/static glUniform1fv 'glUniform1fv)]
-    [(bool int) (dynamic/static glUniform1iv 'glUniform1iv)]
-    [(uint) (dynamic/static glUniform1uiv 'glUniform1uiv)]
-    [(vec2) (dynamic/static glUniform2fv 'glUniform2fv)]
-    [(bvec2 ivec2) (dynamic/static glUniform2iv 'glUniform2iv)]
-    [(uvec2) (dynamic/static glUniform2uiv 'glUniform2uiv)]
-    [(vec3) (dynamic/static glUniform3fv 'glUniform3fv)]
-    [(bvec3 ivec3) (dynamic/static glUniform3iv 'glUniform3iv)]
-    [(uvec3) (dynamic/static glUniform3uiv 'glUniform3uiv)]
-    [(vec4) (dynamic/static glUniform4fv 'glUniform4fv)]
-    [(bvec4 ivec4) (dynamic/static glUniform4iv 'glUniform4iv)]
-    [(uvec4) (dynamic/static glUniform4uiv 'glUniform4uiv)]
-    [(mat2 mat2x2) (dynamic/static glUniformMatrix2fv 'glUniformMatrix2fv)]
-    [(mat3 mat3x3) (dynamic/static glUniformMatrix3fv 'glUniformMatrix3fv)]
-    [(mat4 mat4x4) (dynamic/static glUniformMatrix4fv 'glUniformMatrix4fv)]
-    [(mat2x3) (dynamic/static glUniformMatrix2x3fv 'glUniformMatrix2x3fv)]
-    [(mat3x2) (dynamic/static glUniformMatrix3x2fv 'glUniformMatrix3x2fv)]
-    [(mat2x4) (dynamic/static glUniformMatrix2x4fv 'glUniformMatrix2x4fv)]
-    [(mat4x2) (dynamic/static glUniformMatrix4x2fv 'glUniformMatrix4x2fv)]
-    [(mat3x4) (dynamic/static glUniformMatrix3x4fv 'glUniformMatrix3x4fv)]
-    [(mat4x3) (dynamic/static glUniformMatrix4x3fv 'glUniformMatrix4x3fv)]
-    [else (error "Not a GLSL type" type)]))
+    ((float) (dynamic/static glUniform1fv 'glUniform1fv))
+    ((bool int) (dynamic/static glUniform1iv 'glUniform1iv))
+    ((uint) (dynamic/static glUniform1uiv 'glUniform1uiv))
+    ((vec2) (dynamic/static glUniform2fv 'glUniform2fv))
+    ((bvec2 ivec2) (dynamic/static glUniform2iv 'glUniform2iv))
+    ((uvec2) (dynamic/static glUniform2uiv 'glUniform2uiv))
+    ((vec3) (dynamic/static glUniform3fv 'glUniform3fv))
+    ((bvec3 ivec3) (dynamic/static glUniform3iv 'glUniform3iv))
+    ((uvec3) (dynamic/static glUniform3uiv 'glUniform3uiv))
+    ((vec4) (dynamic/static glUniform4fv 'glUniform4fv))
+    ((bvec4 ivec4) (dynamic/static glUniform4iv 'glUniform4iv))
+    ((uvec4) (dynamic/static glUniform4uiv 'glUniform4uiv))
+    ((mat2 mat2x2) (dynamic/static glUniformMatrix2fv 'glUniformMatrix2fv))
+    ((mat3 mat3x3) (dynamic/static glUniformMatrix3fv 'glUniformMatrix3fv))
+    ((mat4 mat4x4) (dynamic/static glUniformMatrix4fv 'glUniformMatrix4fv))
+    ((mat2x3) (dynamic/static glUniformMatrix2x3fv 'glUniformMatrix2x3fv))
+    ((mat3x2) (dynamic/static glUniformMatrix3x2fv 'glUniformMatrix3x2fv))
+    ((mat2x4) (dynamic/static glUniformMatrix2x4fv 'glUniformMatrix2x4fv))
+    ((mat4x2) (dynamic/static glUniformMatrix4x2fv 'glUniformMatrix4x2fv))
+    ((mat3x4) (dynamic/static glUniformMatrix3x4fv 'glUniformMatrix3x4fv))
+    ((mat4x3) (dynamic/static glUniformMatrix4x3fv 'glUniformMatrix4x3fv))
+    (else (error "Not a GLSL type" type))))
 
 (define (matrix? type)
   (case (symbol->glsl type)
-    [(mat2 mat2x2 mat3 mat3x3 mat4 mat4x4 mat2x3 mat3x2 mat2x4 mat4x2 mat3x4 mat4x3)
-     #t]
-    [else #f]))
+    ((mat2 mat2x2 mat3 mat3x3 mat4 mat4x4 mat2x3 mat3x2 mat2x4 mat4x2 mat3x4 mat4x3)
+     #t)
+    (else #f)))
 
 (define (sampler? type)
   (case (symbol->glsl type)
-    [(sampler1D sampler2D sampler3D samplerCube sampler2DRect sampler1DShadow sampler2DShadow sampler2DRectShadow sampler1DArray sampler2DArray sampler1DArrayShadow sampler2DArrayShadow samplerBuffer sampler2DMS sampler2DMSArray
+    ((sampler1D sampler2D sampler3D samplerCube sampler2DRect sampler1DShadow sampler2DShadow sampler2DRectShadow sampler1DArray sampler2DArray sampler1DArrayShadow sampler2DArrayShadow samplerBuffer sampler2DMS sampler2DMSArray
                 isampler1D isampler2D isampler3D isamplerCube isampler2DRect isampler1DArray isampler2DArray isamplerBuffer isampler2DMS isampler2DMSArray
                 usampler1D usampler2D usampler3D usamplerCube usampler2DRect usampler1DArray usampler2DArray usamplerBuffer usampler2DMS usampler2DMSArray)
-     #t]
-    [else #f]))
+     #t)
+    (else #f)))
 
 (define (sampler->texture type)
   (case (symbol->glsl type)
-    [(sampler1D sampler1DShadow isampler1D usampler1D)
-     gl:+texture-1d+]
-    [(sampler2D sampler2DShadow isampler2D usampler2D)
-     gl:+texture-2d+]
-    [(sampler3D isampler3D usampler3D)
-     gl:+texture-3d+]
-    [(samplerCube isamplerCube usamplerCube)
-     gl:+texture-cube-map+]
-    [(sampler2DRect sampler2DRectShadow isampler2DRect usampler2DRect)
-     gl:+texture-rectangle+]
-    [(sampler1DArray sampler1DArrayShadow isampler1DArray usampler1DArray)
-     gl:+texture-1d-array+]
-    [(sampler2DArray sampler2DArrayShadow isampler2DArray usampler2DArray)
-     gl:+texture-2d-array+]
-    [(samplerBuffer isamplerBuffer usamplerBuffer)
-     gl:+texture-buffer+]
-    [(sampler2DMS isampler2DMS usampler2DMS)
-     gl:+texture-2d-multisample+]
-    [(sampler2DMSArray isampler2DMSArray usampler2DMSArray)
-     gl:+texture-2d-multisample-array+]
-    [else (error "No such sampler type" type)]))
+    ((sampler1D sampler1DShadow isampler1D usampler1D)
+     gl:+texture-1d+)
+    ((sampler2D sampler2DShadow isampler2D usampler2D)
+     gl:+texture-2d+)
+    ((sampler3D isampler3D usampler3D)
+     gl:+texture-3d+)
+    ((samplerCube isamplerCube usamplerCube)
+     gl:+texture-cube-map+)
+    ((sampler2DRect sampler2DRectShadow isampler2DRect usampler2DRect)
+     gl:+texture-rectangle+)
+    ((sampler1DArray sampler1DArrayShadow isampler1DArray usampler1DArray)
+     gl:+texture-1d-array+)
+    ((sampler2DArray sampler2DArrayShadow isampler2DArray usampler2DArray)
+     gl:+texture-2d-array+)
+    ((samplerBuffer isamplerBuffer usamplerBuffer)
+     gl:+texture-buffer+)
+    ((sampler2DMS isampler2DMS usampler2DMS)
+     gl:+texture-2d-multisample+)
+    ((sampler2DMSArray isampler2DMSArray usampler2DMSArray)
+     gl:+texture-2d-multisample-array+)
+    (else (error "No such sampler type" type))))
 
 (define (uniform->binder type n i)
   (if (dynamic?)
@@ -328,22 +328,22 @@
 (define texture-id (make-parameter 0))
 
 (define (uniform-binders uniforms)
-  (let ([uniform-type/number
-         (lambda (u) (cond [(and (list? u)
+  (let ((uniform-type/number
+         (lambda (u) (cond ((and (list? u)
                           (equal? (first u) array:)
                           (= (length u) 3)
                           (number? (third u)))
-                       (values (second u) (third u))]
-                      [(list? u) (error 'define-render-functions
-                                        "Invalid uniform" u)]
-                      [else (values u 1)]))])
-    (let loop ([uniforms uniforms] [i 0]
-               [uniform-binders '()] [sampler-binders '()] [sampler-unbinders '()])
+                       (values (second u) (third u)))
+                      ((list? u) (error 'define-render-functions
+                                        "Invalid uniform" u))
+                      (else (values u 1))))))
+    (let loop ((uniforms uniforms) (i 0)
+               (uniform-binders '()) (sampler-binders '()) (sampler-unbinders '()))
       (if (null? uniforms)
           (values uniform-binders sampler-binders sampler-unbinders)
-          (let-values ([(type n) (uniform-type/number (cadar uniforms))])
+          (let-values (((type n) (uniform-type/number (cadar uniforms))))
             (if (sampler? type)
-                (let-values ([(binder unbinder) (sampler->binder type i (texture-id))])
+                (let-values (((binder unbinder) (sampler->binder type i (texture-id))))
                   (parameterize ((texture-id (add1 (texture-id))))
                     (loop (cdr uniforms) (add1 i)
                           uniform-binders
@@ -365,22 +365,22 @@
                          2)))
 
 (define (render-functions prefix name uniforms)
-  (let* ([renderable-struct (string->symbol
+  (let* ((renderable-struct (string->symbol
                              (string-append
                               "GLLSrenderable"
-                              (number->string (renderable-slots uniforms))))]
-         [fun-name (symbol->c-symbol (symbol-append prefix
-                                                    'render- name))]
-         [fast-fun-name (symbol->c-symbol (symbol-append prefix
-                                                         'fast-render- name))]
-         [fast-fun-begin-name (symbol->c-symbol (symbol-append prefix
+                              (number->string (renderable-slots uniforms)))))
+         (fun-name (symbol->c-symbol (symbol-append prefix
+                                                    'render- name)))
+         (fast-fun-name (symbol->c-symbol (symbol-append prefix
+                                                         'fast-render- name)))
+         (fast-fun-begin-name (symbol->c-symbol (symbol-append prefix
                                                                'fast-render- name
-                                                               '-begin))]
-         [fast-fun-end-name (symbol->c-symbol (symbol-append prefix
+                                                               '-begin)))
+         (fast-fun-end-name (symbol->c-symbol (symbol-append prefix
                                                              'fast-render- name
-                                                             '-end))])
-    (let-values ([(uniform-binders sampler-binders sampler-unbinders)
-                  (uniform-binders uniforms)])
+                                                             '-end))))
+    (let-values (((uniform-binders sampler-binders sampler-unbinders)
+                  (uniform-binders uniforms)))
       (values
        (fmt #f (c-expr
                 `(%begin
@@ -409,10 +409,10 @@
        fast-fun-end-name))))
 
 (define (render-renderable uniforms renderable)
-  (parameterize ([dynamic? #t])
-    (let-values ([(uniform-binders sampler-binders sampler-unbinders)
-                  (uniform-binders uniforms)]
-                 [(n) (renderable-slots uniforms)])
+  (parameterize ((dynamic? #t))
+    (let-values (((uniform-binders sampler-binders sampler-unbinders)
+                  (uniform-binders uniforms))
+                 ((n) (renderable-slots uniforms)))
       (gl:use-program (get-renderable-program renderable))
       (for-each (lambda (b) (b renderable n)) uniform-binders)
       (for-each (lambda (b) (b renderable n)) sampler-binders)
@@ -435,22 +435,22 @@
                            (default)
                            (error 'make-renderable "Expected keyword argument"
                                   arg args)))))
-  (let* ([uniforms (pipeline-uniforms pipeline)]
+  (let* ((uniforms (pipeline-uniforms pipeline))
          (n (renderable-slots uniforms))
-         [renderable (get-arg #:data (lambda ()
+         (renderable (get-arg #:data (lambda ()
                                        (set-finalizer! (allocate-renderable pipeline)
-                                                       free)))])
+                                                       free)))))
     (set-renderable-program! renderable (pipeline-program pipeline))
     (set-renderable-vao! renderable (get-arg #:vao))
     (set-renderable-mode! renderable (get-arg #:mode (lambda () gl:+triangles+)))
     (set-renderable-element-type! renderable (get-arg #:element-type))
     (set-renderable-n-elements! renderable (get-arg #:n-elements))
     (set-renderable-offset! renderable (get-arg #:offset (lambda () #f)))
-    (let loop ([uniforms uniforms] [i 0])
+    (let loop ((uniforms uniforms) (i 0))
       (unless (null? uniforms)
-        (let* ([u (car uniforms)]
-               [name (car u)]
-               [loc (cadr u)])
+        (let* ((u (car uniforms))
+               (name (car u))
+               (loc (cadr u)))
           (set-renderable-uniform-location! renderable n i loc)
           (set-renderable-uniform-value! renderable i
                                          (get-arg (symbol->keyword name))))
