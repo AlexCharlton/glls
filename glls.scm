@@ -92,8 +92,8 @@
      (if (< (length exp) 3)
          (syntax-error "Invalid pipeline definition:" exp))
      (let* ([new-shader? (lambda (s) (and (list? s)
-                                   (= (length s) 5)
-                                   (compare (cadddr s) '->)))]
+                                   (list? (car s))
+                                   (member (caar s) shader-types compare)))]
             [shader-with-uniforms? (lambda (s) (and (list? s)
                                              (>= (length s) 2)
                                              (equal? (second s) uniform:)))]

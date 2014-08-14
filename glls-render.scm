@@ -5,7 +5,8 @@
 
 (import chicken scheme)
 (use (prefix glls glls:) glls-renderable (prefix gl-utils gl:))
-(import-for-syntax (prefix glls glls:) glls-renderable matchable miscmacros)
+(import-for-syntax (prefix glls glls:) (prefix glls-compiler glls:)
+                   glls-renderable matchable miscmacros)
 
 (reexport (except glls define-pipeline)
           (only glls-renderable renderable-size))
@@ -45,15 +46,13 @@
 
 (define-for-syntax (get-uniforms s)
   (cond
-   [(and (list? s)
-       (= (length s) 5)
-       (equal? (cadddr s) '->))
-    (if* (member #:uniform (cadr s))
-          (cdr it)
-          '())]
-   [(and (list? s) (>= (length s) 2) (member #:uniform s))
-    (cdr (member #:uniform s))]
-   [else (syntax-error 'define-pipeline "Only shaders that include uniform definitions may be used with glls-render" s)]))
+   ((and (list? s)
+       (list? (car s))
+       (member (caar s) glls:shader-types))
+    (get-keyword uniform: (cdar s) (lambda () '())))
+   ((and (list? s) (>= (length s) 2) (member #:uniform s))
+    (cdr (member #:uniform s)))
+   (else (syntax-error 'define-pipeline "Only shaders that include uniform definitions may be used with glls-render" s))))
 
 (define-syntax define-renderable-functions
   (ir-macro-transformer

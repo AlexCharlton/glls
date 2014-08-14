@@ -6,6 +6,7 @@
   (compile-glls
    symbol->glsl
    compile-expr
+   shader-types
    shader?
    shader-type
    shader-source
@@ -34,13 +35,14 @@
            (shader-imports s) (shader-exports s)
            (shader-program s)))
 
-(define (%create-shader form #!key [inputs '()])
-  (let-values ([(s i o u im ex) (compile-glls form inputs: inputs)])
+(define (%create-shader form)
+  (let-values ([(s i o u im ex) (compile-glls form)])
     (make-shader (caar form) s i o u im ex 0)))
 
 (define (%make-shader type source inputs outputs uniforms imports exports program)
   (make-shader type (irregex-replace "<<imports>>" source
-                                     (apply string-append (map shader-exports imports)))
+                                     (apply string-append
+                                            (map shader-exports imports)))
                inputs outputs uniforms imports exports program))
 
 (define shader-types
@@ -56,15 +58,23 @@
 ;; - A list of the inputs (string-name symbol-type)
 ;; - A list of the outputs (string-name symbol-type)
 ;; - A list of the uniforms (string-name symbol-type)
-(define (compile-glls form #!key [inputs '()])
+(define (compile-glls form)
   (define (shader-type? s) (member s shader-types))
-  (define (compile type input body output #!key
+  (define (valid-keys? keys)
+    (for-each (lambda (k)
+                (unless (or (not (keyword? k))
+                           (member k '(input: output: uniform: version: extensions:
+                                              pragmas: use: export:)))
+                  (syntax-error "Key not recognized:" k)))
+              keys))
+  (define (compile type body #!key
+                   (input '()) (output '()) (uniform '())
                    (version (glsl-version)) (extensions '()) (pragmas '())
                    (use '()) (export '()))
     (parameterize ((exports (map symbol->glsl export))
                    (export-prototypes '()))
-      (let-values ([(sl in out uni) (compile-inputs (append inputs input) output
-                                                    version type)])
+      (let-values ([(declarations in out uni) (compile-inputs input output uniform
+                                                              version type)])
         (values (fmt #f "#version " (number->string version) "\n\n"
                      (fmt-join dsp
                                (list-ec (: e extensions)
@@ -75,16 +85,17 @@
                      (if (null? use)
                          ""
                          "<<imports>>\n")
-                     (c-expr `(%begin ,@sl ,(glsl->fmt body))))
+                     (c-expr (cons '%begin
+                                   (append declarations (map glsl->fmt body)))))
                 in out uni use (apply string-append
                                 (map (lambda (p) (fmt #f (c-expr p)))
                                      (export-prototypes)))))))
   (match form
-    [(((? shader-type? shader-type) . keys) input body '-> output)
-     (apply compile shader-type input body output keys)]
+    [(((? shader-type? shader-type) . (? valid-keys? keys)) body . body-rest)
+     (apply compile shader-type (cons* body body-rest) keys)]
     [_ (syntax-error "Poorly formed shader:" form)]))
 
-(define (compile-inputs in out version shader-type)
+(define (compile-inputs in out uniform version shader-type)
   (define (in/out-type->glsl-type type)
     (cond
      [(or (>= version 330)
@@ -99,15 +110,10 @@
     (list-ec (: i p)
              (cons (car i)
                    (cadr i))))
-  (let* ([uniforms (if* (member #:uniform in)
-                        (cdr it)
-                        '())]
-         [in (take in (- (length in) (if (null? uniforms) 0
-                                         (add1 (length uniforms)))))])
-    (values (append (params in 'in)
-                    (params out 'out)
-                    (params uniforms 'uniform))
-            (name-type in) (name-type out) (name-type uniforms))))
+  (values (append (params in 'in)
+                  (params out 'out)
+                  (params uniform 'uniform))
+          (name-type in) (name-type out) (name-type uniform)))
 
 (define (compile-expr expr)
   (fmt #f (c-expr (glsl->fmt expr))))
