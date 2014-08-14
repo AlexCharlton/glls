@@ -75,7 +75,8 @@
                          (if (shader? s)
                              s
                              (create-shader s)))
-                       (append shaders (append-map get-imports shaders)))]
+                       (append shaders (delete-duplicates
+                                        (append-map get-imports shaders))))]
          [attributes (append-map shader-inputs
                                  (filter (lambda (s)
                                            (equal? (shader-type s) #:vertex))
