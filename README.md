@@ -34,13 +34,13 @@ Used to represent shaders. Returned by `define-shader` and `create-shader`. It s
 
 Defines a new `shader` named `NAME`. The (unquoted) form `GLLS-SHADER` should conform to language defined in the section [The glls shader language](#the-glls-shader-language). Before shaders are used, they must be compiled by OpenGL with `compile-shader`.
 
-    [procedure] (create-shader GLLS-SHADER #!key INPUTS)
+    [procedure] (create-shader GLLS-SHADER )
 
-Creates (at run-time) a new `shader`. The form `GLLS-SHADER` should conform to language defined in the section [The glls shader language](#the-glls-shader-language). The key `INPUTS` can be used to include additional inputs to the shader. Before shaders are used, they must be compiled by OpenGL with `compile-shader`.
+Creates (at run-time) a new `shader`. The form `GLLS-SHADER` should conform to language defined in the section [The glls shader language](#the-glls-shader-language). Before shaders are used, they must be compiled by OpenGL with `compile-shader`.
 
-    [procedure] (compile-glls GLLS-SHADER #!key INPUTS)
+    [procedure] (compile-glls GLLS-SHADER)
 
-Returns the source string for a shader. The form `GLLS-SHADER` should conform to language defined in the section [The glls shader language](#the-glls-shader-language). The key `INPUTS` can be used to include additional inputs to the shader.
+Returns the source string for a shader. The form `GLLS-SHADER` should conform to language defined in the section [The glls shader language](#the-glls-shader-language).
 
     [procedure] (compile-shader SHADER)
 
@@ -87,11 +87,18 @@ Return the location of `ATTRIBUTE`. The `PIPELINE` must be compiled before this 
 #### Shader syntax
 The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. expect – have the following syntax:
 
-    (<type> [version: <version>] [extensions: <extensions>] [pragmas: <pragmas>]
+    (<type> [input: <inputs>] [uniform: <uniforms>] [output: <outputs>]
+            [version: <version>] [extensions: <extensions>] [pragmas: <pragmas>]
             [use: <imports>] [export: <exports]) 
-      <inputs> <body> -> <outputs>
+    <body> ...
 
 `type` is the keyword type of the shader. It must be one of `#:vertex`, `#:fragment`, `#:geometry`, `#:tess-control`, `#:tess-evaluation`, or `#:compute`.
+
+`inputs` is a list of the input variables for the shader. These are given in `(name type)` lists.
+
+`uniforms` is a list of the uniform variables for the shader. These are given in `(name type)` lists.
+
+`outputs` is a list of the output variables from the shader. These are given in `(name type)` lists.
 
 `version` is the integer version number of the shader, i.e. the number you would write at the top of the shader source (e.g. `#version 410`). Defaults to the `glsl-version` parameter.
 
@@ -103,11 +110,8 @@ The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. 
 
 `exports` is the list of symbols that the current shader exports. See the section [Shaders that export](#shaders-that-export) for more details. Defaults to `()`
 
-`inputs` is a list of the input variables to the shader. These are given in `(name type)` lists. The keyword `uniform:` may be used, and all following inputs will be uniforms. E.g.: `((vertex #:vec2) (color #:vec3) uniform: (view-matrix #:mat4))`
-
 `body` is the form representing the code of the shader. See the section [Shader Lisp](#shader-lisp) for an explanation of the kind of code that is expected.
 
-`outputs` is a list of the output variables from the shader. These are given in `(name type)` lists.
 
 #### Shader Lisp
 For the most part, the Lisp used to define glls shaders looks like Scheme with one notable difference: types must be specified whenever a variable or function is defined. Under the hood, forms are being passed to [fmt](https://wiki.call-cc.org/eggref/4/fmt#c-as-s-expressions), so everything that you can do there will work in glls. Details of the Lisp used for shaders is provided in the following sections.
@@ -291,15 +295,16 @@ Aside from knowing how to write glls shaders, only one macro, one function, and 
 (use glls (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
 (define-pipeline foo 
-  ((#:vertex) ((vertex #:vec2) (color #:vec3) uniform: (mvp #:mat4))
-     (define (main) #:void
-       (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
-       (set! c color))
-     -> ((c #:vec3)))
-  ((#:fragment) ((c #:vec3))
-     (define (main) #:void
-       (set! frag-color (vec4 c 1.0)))
-     -> ((frag-color #:vec4))))
+  ((#:vertex input: ((vertex #:vec2) (color #:vec3))
+             uniform: ((mvp #:mat4))
+             output: ((c #:vec3)))
+   (define (main) #:void
+     (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
+     (set! c color)))
+  ((#:fragment input: ((c #:vec3))
+               output: ((frag-color #:vec4)))
+   (define (main) #:void
+     (set! frag-color (vec4 c 1.0)))))
 
 (glfw:with-window (640 480 "Example" resizable: #f)
    (gl:init)
@@ -316,22 +321,23 @@ This example is similar to the first, but also illustrates the ability to define
 (use glls (prefix glfw3 glfw:) (prefix opengl-glew gl:))
 
 (define-pipeline foo 
-  ((#:vertex) ((vertex #:vec2) (color #:vec3) uniform: (mvp #:mat4))
-     (define (main) #:void
-       (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
-       (set! c color))
-     -> ((c #:vec3)))
-  ((#:fragment) ((c #:vec3))
-     (define (main) #:void
-       (set! frag-color (vec4 c 1.0)))
-     -> ((frag-color #:vec4))))
+  ((#:vertex input: ((vertex #:vec2) (color #:vec3))
+                             uniform: ((mvp #:mat4))
+                             output: ((c #:vec3)))
+   (define (main) #:void
+     (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
+     (set! c color)))
+  ((#:fragment input: ((c #:vec3))
+               output: ((frag-color #:vec4)))
+   (define (main) #:void
+     (set! frag-color (vec4 c 1.0)))))
 
-(define-shader bar (#:vertex)
-    ((vertex #:vec2) (color #:vec3) uniform: (mvp #:mat4))
+(define-shader bar (#:vertex input: ((vertex #:vec2) (color #:vec3))
+                             uniform: ((mvp #:mat4))
+                             output: ((c #:vec3)))
   (define (main) #:void
     (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
-    (set! c color))
-  -> ((c #:vec3)))
+    (set! c color)))
 
 (define-pipeline baz 
   bar
@@ -345,6 +351,11 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
+### Version 0.5.0
+14 August 2014
+
+- New shader syntax
+
 ### Version 0.4.1
 12 August 2014
 
