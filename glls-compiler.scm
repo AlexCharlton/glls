@@ -158,7 +158,7 @@
 
 (define glsl:swizzle
   (match-lambda*
-   ((_ (? symbol? vec) . (? (list-of? symbol?) x)) `(%. ,vec ,(apply symbol-append x)))
+   ((_ vec . (? (list-of? symbol?) x)) `(%. ,vec ,(apply symbol-append x)))
    (args (syntax-error 'swizzle "Poorly formed arguments:" args))))
 
 (define glsl:length
