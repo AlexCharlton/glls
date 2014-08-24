@@ -354,7 +354,7 @@ This example is similar to the first, but also illustrates the ability to define
 ### Version 0.5.1
 24 August 2014
 
-- Allow `#t`, #f`
+- Allow `#t`, `#f`
 - Fix swizzle
 
 
