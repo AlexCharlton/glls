@@ -351,8 +351,12 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
-### Version 0.5.1
+### Version 0.5.2
 24 August 2014
+
+- Update to new gl-utils
+
+**Version 0.5.1**
 
 - Allow `#t`, `#f`
 - Fix swizzle
