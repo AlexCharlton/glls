@@ -121,7 +121,7 @@ It should be possible to do almost anything in glls that you would want to do wi
 Keep in mind that glls cannot do anything that the GLSL can’t, such as making anonymous or recursive functions.
 
 ##### Variables and naming
-Symbols in glls are transformed from a Scheme style into the C style used in the GLSL. Letters after dashes are uppercased (i.e., symbols become camelCased). Symbols prefixed by `gl:` in glls become prefixed by `gl_` in GLSL.
+Symbols in glls are transformed from a Scheme style into the C style used in the GLSL. Letters after dashes are uppercased (i.e., symbols become camelCased). Symbols prefixed by `gl:` in glls become prefixed by `gl_` in GLSL. `#f` and `#t` may be used instead of `false` and `true`.
 
 For programmer-defined variables this has little consequence. The importance of learning the renaming conventions comes when you want to call GLSL functions or variables. Examples of mappings between glls and GLSL names are: `gl:position` → `gl_Position`, `float-bits-to-uint` → `floatBitsToUint`, `shadow-2d-proj-lod` → `shadow2DProjLod`, and `sampler-2d-ms-array` → `sampler2DMSArray`. Two special cases are `emit-vertex` and `end-primitive` which are translated into the functions `EmitVertex` and `EndPrimitive` respectively (which, for some reason, go against the usual GLSL naming conventions).
 

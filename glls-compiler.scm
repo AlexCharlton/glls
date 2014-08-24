@@ -122,6 +122,7 @@
   (let ((t (list-ec (: el tree)
                     (cond
                      ((symbol? el) (symbol->glsl el))
+                     ((boolean? el) (if el 'true 'false))
                      ((list? el) (glsl->fmt el))
                      (else el)))))
     (if* (hash-table-ref/default *special-functions* (car tree) #f)
