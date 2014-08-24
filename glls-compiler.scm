@@ -16,7 +16,6 @@
    shader-imports
    shader-exports
    shader-program
-   make-shader
    %make-shader
    %create-shader)
 
