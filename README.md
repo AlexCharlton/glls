@@ -351,7 +351,15 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
-### Version 0.5.0
+### Version 0.5.1
+24 August 2014
+
+- Allow `#t`, #f`
+- Fix swizzle
+
+
+**Version 0.5.0**
+
 14 August 2014
 
 - New shader syntax
