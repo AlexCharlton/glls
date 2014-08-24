@@ -11,7 +11,8 @@
                          renderable-size)
 
 (import glls chicken scheme foreign lolevel foreign irregex srfi-1 srfi-4 extras)
-(use glls-compiler fmt fmt-c miscmacros (prefix opengl-glew gl:))
+(use glls-compiler fmt fmt-c miscmacros (prefix opengl-glew gl:)
+     (prefix gl-utils-core gl:))
 
 (foreign-declare "#include <math.h>")
 (foreign-declare "#include \"gllsRender.h\"")

@@ -72,7 +72,7 @@
      (glfw:swap-buffers (glfw:window))
      (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
      (render-simple-shader (renderable))
-     (gl:check-error)
+     (check-error)
      (glfw:poll-events)
      (unless (glfw:window-should-close (glfw:window))
        (loop))))

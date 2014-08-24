@@ -4,6 +4,6 @@
  (author "Alex Charlton")
  (category graphics)
  (license "BSD")
- (depends make opengl-glew miscmacros matchable fmt srfi-42)
+ (depends make opengl-glew gl-utils miscmacros matchable fmt srfi-42)
  (test-depends test)
  (foreign-depends "gl" "GLEW"))
