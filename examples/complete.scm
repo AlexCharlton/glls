@@ -30,7 +30,7 @@
 (define zoom (make-parameter 0))
 (define angle (make-parameter 0))
 (define distance (make-parameter 0.2))
-(define camera-position (make-parameter (make-f32vector 3 0)))
+(define camera-position (make-parameter (make-point 0 0 0)))
 
 (glfw:key-callback
  (lambda (window key scancode action mods)
@@ -58,13 +58,11 @@
   (angle (+ (angle) (/ (pan) 30)))
   (if (positive? (+ (distance) (* (zoom) 0.005)))
       (distance (+ (distance) (* (zoom) 0.005))))
-   (let ([camera-x (* (distance) (sin (angle)))]
-         [camera-z (* (distance) (cos (angle)))])
-     (f32vector-set! (camera-position) 0 camera-x)
-     (f32vector-set! (camera-position) 2 camera-z)
-     (view-matrix (look-at camera-x 0 camera-z
-                           0 0 0
-                           0 1 0)))
+  (point-x-set! (camera-position) (* (distance) (sin (angle))))
+  (point-z-set! (camera-position) (* (distance) (cos (angle))))
+  (view-matrix (look-at (camera-position)
+                        (make-point 0 0 0)
+                        (make-point 0 1 0)))
    (mvp (m* projection-matrix
             (m* (view-matrix) model-matrix)
             (mvp))))
