@@ -20,6 +20,7 @@
    compile-pipelines
    pipeline-uniform
    pipeline-attribute
+   pipeline-mesh-attributes
    %delete-shader
    %delete-pipeline)
 
@@ -195,5 +196,12 @@
     (when (not (list? a))
       (error 'pipeline-attribute "Pipeline has not been compiled" pipeline))
     (cadr a)))
+
+(define (pipeline-mesh-attributes pipeline)
+  (map (lambda (a)
+         (when (not (list? a))
+           (error 'pipeline-mesh-attribute "Pipeline has not been compiled" pipeline))
+         (cons (first a) (second a)))
+       (pipeline-attributes pipeline)))
 
 ) ; module end

@@ -1,6 +1,5 @@
 (module glls-render (c-prefix
                      define-pipeline
-                     load-ply-renderable
                      export-pipeline)
 
 (import chicken scheme)
@@ -120,23 +119,5 @@
             (make-renderable (symbol-append 'make- name '-renderable))
             (fast-funs (symbol-append name '-fast-render-functions)))
        `(export ,name ,render ,make-renderable ,fast-funs)))))
-
-(define (load-ply-renderable ply renderable-maker . args)
-  (define (get-arg arg)
-    (get-keyword arg args
-                 (lambda () (error 'load-vao-renderable "Expected keyword argument"
-                              arg args))))
-  (let-values (((vao vertex-data index-data n-verts mode element-type)
-                (gl:load-ply-vao ply
-                                 vertex: (get-arg vertex:)
-                                 face: (get-arg face:))))
-    (values (apply renderable-maker
-                   n-elements: n-verts
-                   element-type: element-type
-                   mode: mode
-                   vao: vao
-                   args)
-            vertex-data
-            index-data)))
 
 ) ; glls-render

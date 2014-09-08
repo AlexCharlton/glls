@@ -12,7 +12,7 @@
 
 (import glls chicken scheme foreign lolevel foreign irregex srfi-1 srfi-4 extras)
 (use glls-compiler fmt fmt-c miscmacros (prefix opengl-glew gl:)
-     (prefix gl-utils-core gl:))
+     (prefix gl-utils-core gl:) (prefix gl-utils-mesh gl:))
 
 (foreign-declare "#include <math.h>")
 (foreign-declare "#include \"gllsRender.h\"")
@@ -442,10 +442,18 @@
                                        (set-finalizer! (allocate-renderable pipeline)
                                                        free)))))
     (set-renderable-program! renderable (pipeline-program pipeline))
-    (set-renderable-vao! renderable (get-arg #:vao))
-    (set-renderable-mode! renderable (get-arg #:mode (lambda () gl:+triangles+)))
-    (set-renderable-element-type! renderable (get-arg #:element-type))
-    (set-renderable-n-elements! renderable (get-arg #:n-elements))
+    (if* (get-arg #:mesh (lambda () #f))
+        (begin
+          (set-renderable-vao! renderable (gl:mesh-vao it))
+          (set-renderable-mode! renderable (gl:mode->gl (gl:mesh-mode it)))
+          (set-renderable-element-type! renderable
+                                        (gl:type->gl (gl:mesh-index-type it)))
+          (set-renderable-n-elements! renderable (gl:mesh-n-indices it)))
+        (begin
+          (set-renderable-vao! renderable (get-arg #:vao))
+          (set-renderable-mode! renderable (get-arg #:mode (lambda () gl:+triangles+)))
+          (set-renderable-element-type! renderable (get-arg #:element-type))
+          (set-renderable-n-elements! renderable (get-arg #:n-elements))))
     (set-renderable-offset! renderable (get-arg #:offset (lambda () #f)))
     (let loop ((uniforms uniforms) (i 0))
       (unless (null? uniforms)
