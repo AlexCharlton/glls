@@ -69,12 +69,12 @@
 
 ;;; Rendering
 (define-pipeline phong-shader 
-  ((#:vertex input: ((vertex #:vec3) (normal #:vec3))
+  ((#:vertex input: ((position #:vec3) (normal #:vec3))
              uniform: ((mvp #:mat4) (model #:mat4) (inv-transpose-model #:mat4))
              output: ((p #:vec3) (n #:vec3)))
    (define (main) #:void
-     (set! gl:position (* mvp (vec4 vertex 1.0)))
-     (set! p (vec3 (* model (vec4 vertex 1))))
+     (set! gl:position (* mvp (vec4 position 1.0)))
+     (set! p (vec3 (* model (vec4 position 1))))
      (set! n (- ; Normals facing in for this model
               (normalize (vec3 (* inv-transpose-model (vec4 normal 0))))))))
   ((#:fragment input: ((n #:vec3) (p #:vec3))
@@ -102,35 +102,35 @@
            (vec4 (+ ambient-intensity diffuse-intensity specular-intensity)
                  (swizzle n x))))))))
 
-(define renderable (make-parameter #f))
+(define horse-mesh (load-ply-mesh
+                    "horse.ply.gz"
+                    vertex: '((position
+                               x y z)
+                              (normal
+                               nx ny nz))
+                    face: 'vertex_indices))
 
 ;;; Initialize and main loop
 (glfw:with-window (640 480 "Example" resizable: #f)
-   (gl:init)
+  (gl:init)
    (gl:enable gl:+depth-test+)
    (gl:depth-func gl:+less+)
    (compile-pipelines)
+   (mesh-attribute-locations-set! horse-mesh (pipeline-mesh-attributes phong-shader))
+   (mesh-make-vao horse-mesh)
    (map (lambda (s) (print (shader-source s))) (pipeline-shaders phong-shader))
-   (renderable (receive (r vertex-data index-data)
-                   (load-ply-renderable
-                    "horse.ply.gz"
-                    make-phong-shader-renderable
-                    vertex: `((,(pipeline-attribute 'vertex phong-shader)
-                               x y z)
-                              (,(pipeline-attribute 'normal phong-shader)
-                               nx ny nz))
-                    face: 'vertex_indices
-                    mvp: (mvp)
-                    model: model-matrix
-                    camera-position: (camera-position)
-                    inv-transpose-model: inverse-transpose-model)
-                 (list r vertex-data index-data))) ; Gotta keep the data safe from being GC'd
-   (let loop ()
-     (glfw:swap-buffers (glfw:window))
-     (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
-     (update)
-     (render-phong-shader (car (renderable)))
-     (check-error)
-     (glfw:poll-events)
-     (unless (glfw:window-should-close (glfw:window))
-       (loop))))
+   (let ((renderable (make-phong-shader-renderable
+                      mesh: horse-mesh
+                      mvp: (mvp)
+                      model: model-matrix
+                      camera-position: (camera-position)
+                      inv-transpose-model: inverse-transpose-model)))
+     (let loop ()
+      (glfw:swap-buffers (glfw:window))
+      (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
+      (update)
+      (render-phong-shader renderable)
+      (check-error)
+      (glfw:poll-events)
+      (unless (glfw:window-should-close (glfw:window))
+        (loop)))))
