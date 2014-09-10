@@ -117,7 +117,7 @@
    (gl:depth-func gl:+less+)
    (compile-pipelines)
    (mesh-attribute-locations-set! horse-mesh (pipeline-mesh-attributes phong-shader))
-   (mesh-make-vao horse-mesh)
+   (mesh-make-vao! horse-mesh)
    (map (lambda (s) (print (shader-source s))) (pipeline-shaders phong-shader))
    (let ((renderable (make-phong-shader-renderable
                       mesh: horse-mesh

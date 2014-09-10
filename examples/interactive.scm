@@ -7,7 +7,6 @@
 (use glls-render (prefix glfw3 glfw:) (prefix opengl-glew gl:) gl-math gl-utils
      srfi-18)
 
-;;; VAO data
 (define rect (make-mesh vertices: '(attributes: ((position #:float 2)
                                                  (color #:unsigned-byte 3
                                                         normalized: #t))
@@ -15,6 +14,7 @@
                                                                      1 -1
                                                                      1  1
                                                                     -1  1))
+
                                                        (color . (1 0 0
                                                                  0 1 0
                                                                  0 0 1
@@ -63,7 +63,7 @@
      (gl:init)
      (compile-pipelines)
      (mesh-attribute-locations-set! rect (pipeline-mesh-attributes simple-shader))
-     (mesh-make-vao rect)
+     (mesh-make-vao! rect #:dynamic)
      (let ((renderable (make-simple-shader-renderable mesh: rect
                                                       mvp: mvp)))
        (let loop ()
