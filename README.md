@@ -82,6 +82,9 @@ Return the location of `UNIFORM`. The `PIPELINE` must be compiled before this fu
 
 Return the location of `ATTRIBUTE`. The `PIPELINE` must be compiled before this function can be used.
 
+    [procedure] (pipeline-mesh-attributes PIPELINE)
+
+Return a list of `(ATTRIBUTE-NAME . LOCATION)` pairs, suitable for passing to [gl-utils’](http://wiki.call-cc.org/eggref/4/gl-utils) `mesh-attribute-locations-set!`.
 
 ### The glls shader language
 #### Shader syntax
@@ -246,6 +249,7 @@ In order to use one of the automatically generated render functions, you must ha
 - `mode:` – The drawing mode to use when drawing the elements of the VAO. Must be one of (opengl-glew’s): `+points+`, `+line-strip+`, `+line-loop+`, `+lines+`, `+line-strip-adjacency+`, `+triangles+`, `+triangle-strip+`, `+triangle-fan+`, `+triangles-adjacency+`, `+triangle-strip-adjacency+`, or `+patches+`. Defaults to `+triangles+`.
 - `n-elements:` – The number of elements (vertices) to draw.
 - `element-type:` – The type of the values in the VAO’s element array. Must be one of `+unsigned-byte+`, `+unsigned-short+`, or `+unsigned-int+`.
+- `mesh:` – A [gl-utils](http://wiki.call-cc.org/eggref/4/gl-utils) mesh, provided in place of `vao:`, `mode:`, `n-elements:`, and `element-type:`.
 - `offset:` – A byte offset to the location of the desired indices to draw.
 - `data:` – An optional pointer to an appropriate glls renderable object. If not provided, a fresh renderable object will be created. [gllsRenderable.h](https://github.com/AlexCharlton/glls/blob/master/gllsRender.h) defines the structs used for renderables. Which struct is used for a given pipeline is chosen based on the number of uniforms present in the pipeline.
 
@@ -278,10 +282,6 @@ One major assumption must be kept in mind while working with the fast render fun
     [macro] (export-pipeline PIPELINE)
 
 Since glls-render causes `define-pipeline` to define multiple functions, this macro exports everything related to `PIPELINE`.
-
-    [procedure] (load-ply-renderable PLY RENDERABLE-MAKER . ARGS)
-
-Load the given PLY file and return a renderable. Returns three values: a renderable, the vertex data blob, and the index data blob.  `PLY` is a PLY file name such as those accepted by opengl-glew’s [`load-ply`](http://api.call-cc.org/doc/opengl-glew/load-ply). `RENDERABLE-MAKER` is the function used to construct the renderable of the desired pipeline. `ARGS` are the keyword arguments that must include `vertex:` and a `face:` arguments (as per [`load-ply-vao`](http://api.call-cc.org/doc/opengl-glew/load-ply-vao)) as well as arguments for each uniform (as per the renderable maker function).
 
 
 ## Examples
