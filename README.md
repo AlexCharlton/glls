@@ -84,7 +84,7 @@ Return the location of `ATTRIBUTE`. The `PIPELINE` must be compiled before this 
 
     [procedure] (pipeline-mesh-attributes PIPELINE)
 
-Return a list of `(ATTRIBUTE-NAME . LOCATION)` pairs, suitable for passing to [gl-utils’](http://wiki.call-cc.org/eggref/4/gl-utils) `mesh-attribute-locations-set!`.
+Return a list of `(ATTRIBUTE-NAME . LOCATION)` pairs, suitable for passing to [gl-utils’](http://wiki.call-cc.org/eggref/4/gl-utils) `mesh-make-vao!`.
 
 ### The glls shader language
 #### Shader syntax

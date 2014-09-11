@@ -78,8 +78,7 @@
                        context-version-minor: 3)
   (gl:init)
   (compile-pipelines)
-  (mesh-attribute-locations-set! rect (pipeline-mesh-attributes sprite-shader))
-  (mesh-make-vao! rect)
+  (mesh-make-vao! rect (pipeline-mesh-attributes sprite-shader))
   (let* ((texture (load-ogl-texture "img_test.png" 0 0 0))
          (renderable (make-sprite-shader-renderable
                       mesh: rect
