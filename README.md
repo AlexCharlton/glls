@@ -351,6 +351,12 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
+### Version 0.6.0
+10 September 2014
+
+- Integrate with gl-utils’ meshes
+- Remove obsolete `load-ply-renderable`
+
 ### Version 0.5.2
 24 August 2014
 
