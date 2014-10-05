@@ -115,7 +115,7 @@
 
 (define get-renderable-uniform-value
   (foreign-lambda* c-pointer ((c-pointer data) (unsigned-int i))
-    "GLLSrenderable2 *renderable = (GLLSrenderable1024 *) data;
+    "GLLSrenderable2 *renderable = (GLLSrenderable2 *) data;
      C_return(renderable->uniformValues[i]);"))
 
 (define get-renderable-uniform-location
