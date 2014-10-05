@@ -21,6 +21,8 @@ It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/e
 * srfi-42
 
 ## Documentation
+glls contains three modules: glls-render, glls, and glls-compiler. glls-render rexports glls and glls-compiler and is used when you want the functionality of glls plus the addition of [automatically generated render functions](#automatic-render-functions). glls is the primary module, providing the main interface to shaders and pipelines, which also rexports glls-compiler. glls-compiler provides the functions used to compile shaders.
+
     [parameter] glsl-version
 
 The default GLSL version used by shaders. Defaults to `330`.
