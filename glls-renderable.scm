@@ -331,13 +331,13 @@
 (define (uniform-binders uniforms)
   (let ((uniform-type/number
          (lambda (u) (cond ((and (list? u)
-                          (equal? (first u) array:)
-                          (= (length u) 3)
-                          (number? (third u)))
-                       (values (second u) (third u)))
-                      ((list? u) (error 'define-render-functions
-                                        "Invalid uniform" u))
-                      (else (values u 1))))))
+                                 (equal? (first u) array:)
+                                 (= (length u) 3)
+                                 (number? (third u)))
+                            (values (second u) (third u)))
+                           ((list? u) (error 'define-renderable-functions
+                                             "Invalid uniform" u))
+                           (else (values u 1))))))
     (let loop ((uniforms uniforms) (i 0)
                (uniform-binders '()) (sampler-binders '()) (sampler-unbinders '()))
       (if (null? uniforms)
