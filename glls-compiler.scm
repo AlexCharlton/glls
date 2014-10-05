@@ -16,6 +16,7 @@
    shader-imports
    shader-exports
    shader-program
+   glsl-version
    %make-shader
    %create-shader)
 
