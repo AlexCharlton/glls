@@ -14,8 +14,7 @@
 (import chicken scheme)
 (use glls-render (prefix glfw3 glfw:) (prefix opengl-glew gl:) gl-math gl-utils soil)
 
-
-;;; VAO data
+;; Mesh
 (define rect (make-mesh vertices: '(attributes: ((position #:float 2)
                                                  (tex-coord #:unsigned-short 2
                                                             normalized: #t))
@@ -30,16 +29,6 @@
                         indices: '(type: #:ushort
                                    initial-elements: (0 1 2
                                                       0 2 3))))
-
-(define vertex-data (f32vector -1 -1  0  1
-                                1 -1  1  1
-                                1  1  1  0
-                               -1  1  0  0))
-
-(define index-data (u16vector 0 1 2
-                              0 2 3))
-
-(define vao (make-parameter #f))
 
 ;;; Matrices
 (define projection-matrix

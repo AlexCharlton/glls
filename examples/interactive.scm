@@ -7,6 +7,7 @@
 (use glls-render (prefix glfw3 glfw:) (prefix opengl-glew gl:) gl-math gl-utils
      srfi-18)
 
+;; Mesh
 (define rect (make-mesh vertices: '(attributes: ((position #:float 2)
                                                  (color #:unsigned-byte 3
                                                         normalized: #t))
@@ -71,5 +72,5 @@
          (render-simple-shader renderable)
          (thread-yield!) ; Let the main thread eval stuff
          (glfw:poll-events)
-         (unless (glfw:window-should-close (glfw:window))
+         (unless (glfw:window-should-close? (glfw:window))
            (loop)))))))

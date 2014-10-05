@@ -22,15 +22,14 @@
                                          (mat4-identity #t))))
 (define mvp (make-parameter (make-f32vector 16)))
 (define inverse-transpose-model
-  (inverse (transpose model-matrix)
-           #t))
+  (transpose (inverse model-matrix) #t))
 
 ;;; Camera movement
 (define pan (make-parameter 0))
 (define zoom (make-parameter 0))
 (define angle (make-parameter 0))
 (define distance (make-parameter 0.2))
-(define camera-position (make-parameter (make-point 0 0 0)))
+(define camera-position (make-parameter (make-point 0 0 0 #t)))
 
 (glfw:key-callback
  (lambda (window key scancode action mods)
@@ -80,7 +79,7 @@
   ((#:fragment input: ((n #:vec3) (p #:vec3))
                uniform: ((camera-position #:vec3))
                output: ((frag-color #:vec4)))
-   (let ((light-position #:vec3 (vec3 0 0 2))
+   (let ((light-position #:vec3 (vec3 0 2 2))
          (light-diffuse #:vec3 (vec3 0.7 0.7 0.7))
          (light-specular #:vec3 (vec3 1 1 1))
          (ambient #:vec3 (vec3 0.2 0.2 0.2))
@@ -91,15 +90,19 @@
      (define (main) #:void
        (let* ((ambient-intensity #:vec3 (* ambient surface-ambient))
               (to-light #:vec3 (normalize (- light-position p)))
-              (diffuse-intensity #:vec3 (* light-diffuse surface-diffuse
-                                           (max (dot to-light n) 0)))
-              (spec #:float (max (dot (reflect (- to-light) n)
-                                      (normalize (- camera-position p)))
-                                 0))
-              (specular-intensity #:vec3 (* light-specular surface-specular
-                                            (expt spec specular-exponent))))
+              (diffuse-intensity #:float (max (dot to-light n) 0))
+              (diffuse #:vec3 (* light-diffuse surface-diffuse
+                                 diffuse-intensity))
+              (specular-intensity
+               #:float (if (> diffuse-intensity 0)
+                           (max (dot (normalize (- camera-position p))
+                                     (reflect (- to-light) n))
+                                0)
+                           0))
+              (specular #:vec3 (* light-specular surface-specular
+                                  (expt specular-intensity specular-exponent))))
          (set! frag-color
-           (vec4 (+ ambient-intensity diffuse-intensity specular-intensity)
+           (vec4 (+ ambient-intensity diffuse specular)
                  (swizzle n x))))))))
 
 (define horse-mesh (load-ply-mesh

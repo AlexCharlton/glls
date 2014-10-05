@@ -14,7 +14,7 @@
 (import chicken scheme)
 (use glls-render (prefix glfw3 glfw:) (prefix opengl-glew gl:) gl-math gl-utils)
 
-;;; VAO data
+;;; Mesh
 (define rect (make-mesh vertices: '(attributes: ((position #:float 2))
                                     initial-elements: ((position . (-1 -1
                                                                      1 -1
