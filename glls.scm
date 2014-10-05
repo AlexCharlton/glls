@@ -82,7 +82,9 @@
                                  (filter (lambda (s)
                                            (equal? (shader-type s) #:vertex))
                                          shaders)))
-         (uniforms (append-map shader-uniforms shaders))
+         (uniforms (delete-duplicates
+                          (append-map shader-uniforms shaders)
+                          (lambda (a b) (eq? (car a) (car b)))))
          (pipeline (make-pipeline shaders attributes uniforms 0)))
     (set! *pipelines* (cons pipeline *pipelines*))
     (set-finalizer! pipeline %delete-pipeline)))

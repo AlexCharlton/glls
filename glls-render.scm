@@ -59,7 +59,9 @@
      (match exp
        ((_ name . shaders)
         (let* ((name (strip-syntax name))
-               (uniforms (concatenate (map get-uniforms (strip-syntax shaders)))))
+               (uniforms (delete-duplicates
+                          (concatenate (map get-uniforms (strip-syntax shaders)))
+                          (lambda (a b) (eq? (car a) (car b))))))
           (let-values (((render-funs render-fun-name fast-fun-begin-name
                                      fast-fun-name fast-fun-end-name)
                         (if (feature? compiling:)
