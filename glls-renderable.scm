@@ -32,15 +32,17 @@
     "GLLSrenderable2 *renderable = (GLLSrenderable2 *) data;
      renderable->nElements = n;"))
 
-(define set-renderable-element-type!
-  (foreign-lambda* void ((c-pointer data) (unsigned-int type))
-    "GLLSrenderable2 *renderable = (GLLSrenderable2 *) data;
-     renderable->elementType = type;"))
+(define (set-renderable-element-type! renderable type)
+  ((foreign-lambda* void ((c-pointer data) (unsigned-int type))
+     "GLLSrenderable2 *renderable = (GLLSrenderable2 *) data;
+      renderable->elementType = type;")
+   renderable (gl:type->gl type)))
 
-(define set-renderable-mode!
-  (foreign-lambda* void ((c-pointer data) (unsigned-int mode))
-    "GLLSrenderable2 *renderable = (GLLSrenderable2 *) data;
-     renderable->mode = mode;"))
+(define (set-renderable-mode! renderable mode)
+  ((foreign-lambda* void ((c-pointer data) (unsigned-int mode))
+     "GLLSrenderable2 *renderable = (GLLSrenderable2 *) data;
+      renderable->mode = mode;")
+   renderable (gl:mode->gl mode)))
 
 (define set-renderable-offset!
   (foreign-lambda* void ((c-pointer data) (c-pointer offset))
@@ -445,13 +447,12 @@
     (if* (get-arg #:mesh (lambda () #f))
         (begin
           (set-renderable-vao! renderable (gl:mesh-vao it))
-          (set-renderable-mode! renderable (gl:mode->gl (gl:mesh-mode it)))
-          (set-renderable-element-type! renderable
-                                        (gl:type->gl (gl:mesh-index-type it)))
+          (set-renderable-mode! renderable (gl:mesh-mode it))
+          (set-renderable-element-type! renderable (gl:mesh-index-type it))
           (set-renderable-n-elements! renderable (gl:mesh-n-indices it)))
         (begin
           (set-renderable-vao! renderable (get-arg #:vao))
-          (set-renderable-mode! renderable (get-arg #:mode (lambda () gl:+triangles+)))
+          (set-renderable-mode! renderable (get-arg #:mode (lambda () #:triangles)))
           (set-renderable-element-type! renderable (get-arg #:element-type))
           (set-renderable-n-elements! renderable (get-arg #:n-elements))))
     (set-renderable-offset! renderable (get-arg #:offset (lambda () #f)))
