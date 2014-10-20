@@ -355,6 +355,11 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
+### Version 0.7.0
+20 October 2014
+
+- Renderable element-type and mode setters take keywords instead of integers
+
 ### Version 0.6.0
 10 September 2014
 
