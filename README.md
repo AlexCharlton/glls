@@ -248,9 +248,9 @@ The `render-PIPELINE-NAME` function works differently depending on whether the `
 In order to use one of the automatically generated render functions, you must have something to render. That’s why `define-pipeline` also defines a function that constructs a renderable object: `make-SHADER-NAME-renderable`. This function takes a number of keyword arguments:
 
 - `vao:` – A VAO such as those returned by [opengl-glew’s `make-vao`](http://api.call-cc.org/doc/opengl-glew/make-vao). I.e.: A VAO that binds an array of attributes – for each element in the pipeline – as well as an element array.
-- `mode:` – The drawing mode to use when drawing the elements of the VAO. Must be one of (opengl-glew’s): `+points+`, `+line-strip+`, `+line-loop+`, `+lines+`, `+line-strip-adjacency+`, `+triangles+`, `+triangle-strip+`, `+triangle-fan+`, `+triangles-adjacency+`, `+triangle-strip-adjacency+`, or `+patches+`. Defaults to `+triangles+`.
+- `mode:` – The drawing mode to use when drawing the elements of the VAO. Must be mode that is accepted by (gl-utils’) [mode->gl](http://api.call-cc.org/doc/gl-utils/mode-%3Egl). Defaults to `#:triangles`.
 - `n-elements:` – The number of elements (vertices) to draw.
-- `element-type:` – The type of the values in the VAO’s element array. Must be one of `+unsigned-byte+`, `+unsigned-short+`, or `+unsigned-int+`.
+- `element-type:` – The type of the values in the VAO’s element array. Must be one of `#:unsigned-byte`, `#:unsigned-short`, or `#:unsigned-int`.
 - `mesh:` – A [gl-utils](http://wiki.call-cc.org/eggref/4/gl-utils) mesh, provided in place of `vao:`, `mode:`, `n-elements:`, and `element-type:`.
 - `offset:` – A byte offset to the location of the desired indices to draw.
 - `data:` – An optional pointer to an appropriate glls renderable object. If not provided, a fresh renderable object will be created. [gllsRenderable.h](https://github.com/AlexCharlton/glls/blob/master/gllsRender.h) defines the structs used for renderables. Which struct is used for a given pipeline is chosen based on the number of uniforms present in the pipeline.
@@ -266,6 +266,8 @@ Additionally, `define-pipeline` defines a number of renderable setters for each 
 - `set-SHADER-NAME-renderable-n-elements!`
 - `set-SHADER-NAME-renderable-element-type!`
 - `set-SHADER-NAME-renderable-offset!`
+
+These setters accept two arguments: a renderable and a value. The values correspond to those that `make-SHADER-NAME-renderable` accepts.
 
 And for each uniform in the pipeline, `set-SHADER-NAME-renderable-UNIFORM-NAME!` is created.
 
