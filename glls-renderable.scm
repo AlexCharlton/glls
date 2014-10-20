@@ -73,9 +73,10 @@
         renderable->uniformValues[i] = value;") data i value))
    ((fixnum? value)
     ((foreign-lambda* void
-         ((c-pointer data) (int i) (int value))
+         ((c-pointer data) (int i) (c-pointer value))
        "GLLSrenderable1024 *renderable = (GLLSrenderable1024 *) data;
-       renderable->uniformValues[i] = (void *) value;") data i value))
+       renderable->uniformValues[i] = (void *) value;") data i
+       (address->pointer value)))
    (else (error 'set-renderable-uniform-value! "Invalid type" value))))
 
 (define set-renderable-uniform-location!
