@@ -102,7 +102,7 @@
          (equal? type 'uniform)) type)
      ((and (equal? shader-type #:vertex)
          (equal? type 'in)) 'attribute)
-     (else 'varrying)))
+     (else 'varying)))
   (define (params p type)
     (list-ec (: i p) (match-let (((t name) (glsl->fmt (parameter i))))
                        `(%var ,(list (in/out-type->glsl-type type) t) ,name))))
