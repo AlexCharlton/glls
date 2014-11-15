@@ -137,15 +137,21 @@
 
 
 ;;; GL compiling
+(define (shader-int-type shader)
+  (cond-expand
+    (gles (ecase (shader-type shader)
+            ((vertex:) gl:+vertex-shader+)
+            ((fragment:) gl:+fragment-shader+)
+            ((compute:) gl:+compute-shader+)))
+    (else (ecase (shader-type shader)
+            ((vertex:) gl:+vertex-shader+)
+            ((tess-control:) gl:+tess-control-shader+)
+            ((tess-evaluation:) gl:+tess-evaluation-shader+)
+            ((geometry:) gl:+geometry-shader+)
+            ((fragment:) gl:+fragment-shader+)
+            ((compute:) gl:+compute-shader+)))))
+
 (define (compile-shader shader)
-  (define (shader-int-type shader)
-    (ecase (shader-type shader)
-           ((vertex:) gl:+vertex-shader+)
-           ((tess-control:) gl:+tess-control-shader+)
-           ((tess-evaluation:) gl:+tess-evaluation-shader+)
-           ((geometry:) gl:+geometry-shader+)
-           ((fragment:) gl:+fragment-shader+)
-           ((compute:) gl:+compute-shader+)))
   (when (zero? (shader-program shader))
     (set! (shader-program shader) (gl:make-shader (shader-int-type shader) (shader-source shader)))))
 
