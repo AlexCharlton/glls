@@ -76,7 +76,7 @@
             (define (main) #:void
               (set! gl:position (* view-matrix (vec4 vertex 0.0 1.0)))
               (set! c color)))))
-  (test  "#version 130\n\nattribute vec2 vertex;\nattribute vec3 color;\nvarrying vec3 c;\nuniform mat4 viewMatrix;\nvoid main () {\n    gl_Position = viewMatrix * vec4(vertex, 0.0, 1.0);\n    c = color;\n}\n"
+  (test  "#version 130\n\nattribute vec2 vertex;\nattribute vec3 color;\nvarying vec3 c;\nuniform mat4 viewMatrix;\nvoid main () {\n    gl_Position = viewMatrix * vec4(vertex, 0.0, 1.0);\n    c = color;\n}\n"
          (compile-glls
           '((#:vertex input: ((vertex #:vec2) (color #:vec3))
                       uniform: ((view-matrix #:mat4))
@@ -85,7 +85,7 @@
             (define (main) #:void
               (set! gl:position (* view-matrix (vec4 vertex 0.0 1.0)))
               (set! c color)))))
-  (test "#version 130\n\nvarrying vec3 c;\nvoid main () {\n    gl_FragColor = vec4(c, 1.0);\n}\n"
+  (test "#version 130\n\nvarying vec3 c;\nvoid main () {\n    gl_FragColor = vec4(c, 1.0);\n}\n"
         (compile-glls '((#:fragment input: ((c #:vec3))
                                     #:version 130) 
                         (define (main) #:void
