@@ -70,7 +70,8 @@
 (define-pipeline phong-shader 
   ((#:vertex input: ((position #:vec3) (normal #:vec3))
              uniform: ((mvp #:mat4) (model #:mat4) (inv-transpose-model #:mat4))
-             output: ((p #:vec3) (n #:vec3)))
+             output: ((p #:vec3) (n #:vec3))
+             version: 120)
    (define (main) #:void
      (set! gl:position (* mvp (vec4 position 1.0)))
      (set! p (vec3 (* model (vec4 position 1))))
@@ -78,7 +79,7 @@
               (normalize (vec3 (* inv-transpose-model (vec4 normal 0))))))))
   ((#:fragment input: ((n #:vec3) (p #:vec3))
                uniform: ((camera-position #:vec3))
-               output: ((frag-color #:vec4)))
+               version: 120)
    (let ((light-position #:vec3 (vec3 0 2 2))
          (light-diffuse #:vec3 (vec3 0.7 0.7 0.7))
          (light-specular #:vec3 (vec3 1 1 1))
@@ -101,7 +102,7 @@
                            0))
               (specular #:vec3 (* light-specular surface-specular
                                   (expt specular-intensity specular-exponent))))
-         (set! frag-color
+         (set! gl:frag-color
            (vec4 (+ ambient-intensity diffuse specular)
                  (swizzle n x))))))))
 
