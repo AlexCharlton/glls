@@ -140,7 +140,7 @@
      else if (i <= 128) C_return(sizeof(GLLSrenderable128));
      else if (i <= 256) C_return(sizeof(GLLSrenderable256));
      else if (i <= 1024) C_return(sizeof(GLLSrenderable1024));
-     fprintf(stderr, \"Error GLLSrenerables cannot hold this many uniforms: ~d\\n\", i);
+     fprintf(stderr, \"Error GLLSrenerables cannot hold this many uniforms: %d\\n\", i);
      C_return(0);")
    (length (pipeline-uniforms pipeline))))
 
