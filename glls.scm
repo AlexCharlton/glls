@@ -25,7 +25,7 @@
    %delete-pipeline)
 
 (import chicken scheme srfi-69 srfi-1 miscmacros)
-(use glls-compiler (prefix opengl-glew gl:) (prefix gl-utils-core gl:) matchable)
+(use glls-compiler (prefix opengl-glew gl:) (prefix gl-utils-core gl:) matchable extras)
 (import-for-syntax glls-compiler)
 
 (reexport glls-compiler)
