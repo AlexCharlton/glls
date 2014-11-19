@@ -126,7 +126,7 @@
                 (let ((old-program (pipeline-program ,name)))
                   ;; Keep finalizer of old shader from deleting new one
                   (set! (pipeline-program ,name) 0)
-                  (define ,name
+                  (set! ,name
                     (create-pipeline ,@shader-makers))
                   (set! (pipeline-program ,name) old-program)
                   (compile-pipelines))
