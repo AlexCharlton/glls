@@ -244,13 +244,15 @@ Of course, if you are defining the shaders in the pipeline, then a separate list
 
 The `render-PIPELINE-NAME` function works differently depending on whether the `define-pipeline` has been compiled or interpreted (although the end results should stay the same). When `define-pipeline` is compiled, the resulting `render-PIPELINE-NAME` function is compiled directly to efficient (non-branching) C. When `define-pipeline` is interpreted, `render-PIPELINE-NAME` calls a generic rendering function that is not nearly as fast.
 
+The `render-PIPELINE-NAME` function draws the renderable using `draw-elements`. While this is typically the most efficient way to render a set of vertices, sometimes `draw-arrays` is preferable. A function similar to `render-PIPELINE-NAME` is therefore defined, `render-arrays-PIPELINE-NAME`, which functions identically except for calling `draw-arrays` instead of `draw-elements`.
+
 #### Renderables
 In order to use one of the automatically generated render functions, you must have something to render. That’s why `define-pipeline` also defines a function that constructs a renderable object: `make-SHADER-NAME-renderable`. This function takes a number of keyword arguments:
 
 - `vao:` – A VAO such as those returned by [opengl-glew’s `make-vao`](http://api.call-cc.org/doc/opengl-glew/make-vao). I.e.: A VAO that binds an array of attributes – for each element in the pipeline – as well as an element array.
 - `mode:` – The drawing mode to use when drawing the elements of the VAO. Must be mode that is accepted by (gl-utils’) [mode->gl](http://api.call-cc.org/doc/gl-utils/mode-%3Egl). Defaults to `#:triangles`.
 - `n-elements:` – The number of elements (vertices) to draw.
-- `element-type:` – The type of the values in the VAO’s element array. Must be one of `#:unsigned-byte`, `#:unsigned-short`, or `#:unsigned-int`.
+- `element-type:` – The type of the values in the VAO’s element array. Must be one of `#:unsigned-byte`, `#:unsigned-short`, or `#:unsigned-int`. Not required if the VAO has no element array (i.e. `render-arrays-PIPELINE-NAME` is being used to render).
 - `mesh:` – A [gl-utils](http://wiki.call-cc.org/eggref/4/gl-utils) mesh, provided in place of `vao:`, `mode:`, `n-elements:`, and `element-type:`.
 - `offset:` – A byte offset to the location of the desired indices to draw.
 - `data:` – An optional pointer to an appropriate glls renderable object. If not provided, a fresh renderable object will be created. [gllsRenderable.h](https://github.com/AlexCharlton/glls/blob/master/gllsRender.h) defines the structs used for renderables. Which struct is used for a given pipeline is chosen based on the number of uniforms present in the pipeline.
@@ -276,9 +278,9 @@ And for each uniform in the pipeline, `set-SHADER-NAME-renderable-UNIFORM-NAME!`
 Returns the size, in bytes, of the memory needed for a renderable belonging to `PIPELINE`.
 
 #### Fast render functions
-When compiled, the render function defined by `define-pipeline` is actually a combination of three “fast” render functions: a begin render function, a render function, and an end render function. This is done so that, if desired, all of the renderables that belong to the same pipeline may be rendered at the same time, without needing to perform expensive calls like program changes or texture binding more than once. To use these functions, simply call the begin render function with the first renderable, then call the render function on all renderables (including the first), finally calling the end render function (with no arguments) to clean up.
+When compiled, the render function defined by `define-pipeline` is actually a combination of three “fast” render functions: a begin render function, a render function, and an end render function. The array rendering function is a similar combination: the begin render function, an array render function and the end render function. This is done so that, if desired, all of the renderables that belong to the same pipeline may be rendered at the same time, without needing to perform expensive calls like program changes or texture binding more than once. To use these functions, simply call the begin render function with the first renderable, then call the render (or array render) function on all renderables (including the first), finally calling the end render function (with no arguments) to clean up.
 
-`define-pipeline` does not define all of these functions separately, but instead defines a single function with which to access them: `PIPELINE-NAME-fast-render-functions`. This function returns six values: the begin render function, the render function, the end render function, and pointers to those same C functions in that order.
+`define-pipeline` does not define all of these functions separately, but instead defines a single function with which to access them: `PIPELINE-NAME-fast-render-functions`. This function returns eight values: the begin render function, the render function, the end render function, the array render function, and pointers to those same C functions in that order.
 
 One major assumption must be kept in mind while working with the fast render functions: textures are only bound once. In other words: it is assumed that that all of the renderables belonging to the same pipeline share a common “sprite sheet” (or other shared texture type). If this assumption does not hold true, simply use the standard render function, or call the begin render function for every set of renderables that uses a separate texture.
 
