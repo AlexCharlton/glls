@@ -36,7 +36,7 @@
   ((foreign-lambda* void ((c-pointer data) (unsigned-int type))
      "GLLSrenderable2 *renderable = (GLLSrenderable2 *) data;
       renderable->elementType = type;")
-   renderable (gl:type->gl type)))
+   renderable (if type (gl:type->gl type) 0)))
 
 (define (set-renderable-mode! renderable mode)
   ((foreign-lambda* void ((c-pointer data) (unsigned-int mode))
@@ -388,6 +388,11 @@
                               (number->string (renderable-slots uniforms)))))
          (fun-name (symbol->c-symbol (symbol-append prefix
                                                     'render- name)))
+         (arrays-fun-name (symbol->c-symbol (symbol-append prefix
+                                                           'render-arrays- name)))
+         (fast-fun-arrays-name (symbol->c-symbol (symbol-append prefix
+                                                                'fast-render-arrays-
+                                                                name)))
          (fast-fun-name (symbol->c-symbol (symbol-append prefix
                                                          'fast-render- name)))
          (fast-fun-begin-name (symbol->c-symbol (symbol-append prefix
@@ -413,19 +418,32 @@
                                         (%-> data nElements)
                                         (%-> data elementType)
                                         (%-> data offset)))
+                  (%fun void ,fast-fun-arrays-name (((const ,renderable-struct *)
+                                                     data))
+                        ,@uniform-binders
+                        (glBindVertexArray (%-> data vao))
+                        (glDrawArrays (%-> data mode)
+                                      (%cast GLint (%-> data offset))
+                                      (%-> data nElements)))
                   (%fun void ,fast-fun-end-name ()
                         ,@sampler-unbinders
                         (glBindVertexArray 0))
                   (%fun void ,fun-name (((const ,renderable-struct *) data))
                         (,fast-fun-begin-name data)
                         (,fast-fun-name data)
+                        (,fast-fun-end-name))
+                  (%fun void ,arrays-fun-name (((const ,renderable-struct *) data))
+                        (,fast-fun-begin-name data)
+                        (,fast-fun-arrays-name data)
                         (,fast-fun-end-name)))))
        fun-name
+       arrays-fun-name
        fast-fun-begin-name
        fast-fun-name
-       fast-fun-end-name))))
+       fast-fun-end-name
+       fast-fun-arrays-name))))
 
-(define (render-renderable uniforms renderable)
+(define (render-renderable uniforms renderable #!optional arrays?)
   (parameterize ((dynamic? #t))
     (let-values (((uniform-binders sampler-binders sampler-unbinders)
                   (uniform-binders uniforms))
@@ -434,13 +452,20 @@
       (for-each (lambda (b) (b renderable n)) uniform-binders)
       (for-each (lambda (b) (b renderable n)) sampler-binders)
       (gl:bind-vertex-array (get-renderable-vao renderable))
-      (gl:draw-elements (get-renderable-mode renderable)
-                        (get-renderable-n-elements renderable)
-                        (get-renderable-element-type renderable)
-                        (get-renderable-offset renderable))
+      (if arrays?
+          (gl:draw-arrays (get-renderable-mode renderable)
+                          (if* (get-renderable-offset renderable)
+                               (pointer->address it)
+                               0)
+                          (get-renderable-n-elements renderable))
+          (gl:draw-elements (get-renderable-mode renderable)
+                            (get-renderable-n-elements renderable)
+                            (get-renderable-element-type renderable)
+                            (get-renderable-offset renderable)))
       (for-each (lambda (b) (b)) sampler-unbinders)
       (gl:bind-vertex-array 0)
       (gl:check-error))))
+
 
 (define (symbol->keyword sym)
     (string->keyword (symbol->string sym)))

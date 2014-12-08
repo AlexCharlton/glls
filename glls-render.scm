@@ -62,11 +62,14 @@
                (uniforms (delete-duplicates
                           (concatenate (map get-uniforms (strip-syntax shaders)))
                           (lambda (a b) (eq? (car a) (car b))))))
-          (let-values (((render-funs render-fun-name fast-fun-begin-name
-                                     fast-fun-name fast-fun-end-name)
+          (let-values (((render-funs render-fun-name
+                                     render-arrays-fun-name
+                                     fast-fun-begin-name
+                                     fast-fun-name fast-fun-end-name
+                                     fast-fun-arrays-name)
                         (if (feature? compiling:)
                             (render-functions (c-prefix) name uniforms)
-                            (values #f #f #f #f #f))))
+                            (values #f #f #f #f #f #f #f))))
             `(begin
                ,(if (feature? compiling:)
                     `(begin
@@ -80,6 +83,8 @@
                        (foreign-declare ,render-funs)
                        (define ,(symbol-append 'render- name)
                          (foreign-lambda void ,render-fun-name c-pointer))
+                       (define ,(symbol-append 'render-arrays- name)
+                         (foreign-lambda void ,render-arrays-fun-name c-pointer))
                        (define (,(symbol-append name '-fast-render-functions))
                          (values
                           (foreign-lambda void ,(symbol->string fast-fun-begin-name)
@@ -87,6 +92,8 @@
                           (foreign-lambda void ,(symbol->string fast-fun-name)
                                           c-pointer)
                           (foreign-lambda void ,(symbol->string fast-fun-end-name))
+                          (foreign-lambda void ,(symbol->string fast-fun-arrays-name)
+                                          c-pointer)
                           (foreign-value ,(string-append
                                            "&" (symbol->string fast-fun-begin-name))
                                          c-pointer)
@@ -95,9 +102,15 @@
                                          c-pointer)
                           (foreign-value ,(string-append
                                            "&" (symbol->string fast-fun-end-name))
+                                         c-pointer)
+                          (foreign-value ,(string-append
+                                           "&" (symbol->string fast-fun-arrays-name))
                                          c-pointer))))
-                    `(define (,(symbol-append 'render- name) renderable)
-                       (render-renderable ',uniforms renderable)))
+                    `(begin
+                       (define (,(symbol-append 'render- name) renderable)
+                         (render-renderable ',uniforms renderable #f))
+                       (define (,(symbol-append 'render-arrays- name) renderable)
+                         (render-renderable ',uniforms renderable #t))))
                (define (,(symbol-append 'make- name '-renderable) . args)
                  (apply make-renderable ,name args))
                (renderable-setters ,name ,uniforms)))))
