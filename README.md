@@ -357,6 +357,13 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
+### Version 0.8.0
+8 December 2014
+
+- Add `draw-array` render functions
+- Support OpenGL ES
+- Bug fixes
+
 ### Version 0.7.0
 20 October 2014
 
