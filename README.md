@@ -285,9 +285,9 @@ When compiled, the render function defined by `define-pipeline` is actually a co
 One major assumption must be kept in mind while working with the fast render functions: textures are only bound once. In other words: it is assumed that that all of the renderables belonging to the same pipeline share a common “sprite sheet” (or other shared texture type). If this assumption does not hold true, simply use the standard render function, or call the begin render function for every set of renderables that uses a separate texture.
 
 #### Utilities
-    [macro] (export-pipeline PIPELINE)
+    [macro] (export-pipeline . PIPELINES)
 
-Since glls-render causes `define-pipeline` to define multiple functions, this macro exports everything related to `PIPELINE`.
+Since glls-render causes `define-pipeline` to define multiple functions, this macro exports everything related to each pipeline in `PIPELINES`.
 
 
 ## Examples
