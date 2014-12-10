@@ -5,7 +5,7 @@
 (import chicken scheme)
 (use (prefix glls glls:) glls-renderable (prefix gl-utils gl:))
 (import-for-syntax (prefix glls glls:) (prefix glls-compiler glls:)
-                   glls-renderable matchable miscmacros)
+                   glls-renderable matchable miscmacros data-structures)
 
 (reexport (except glls define-pipeline)
           (only glls-renderable renderable-size))
@@ -126,13 +126,20 @@
 (define-syntax export-pipeline
   (ir-macro-transformer
    (lambda (expr i c)
-     (if (and (not (= (length expr) 2))
-            (symbol? (cadr expr)))
-         (syntax-error 'export-shader "Expected a pipeline name" expr))
-     (let* ((name (strip-syntax (cadr expr)))
-            (render (symbol-append 'render- name))
-            (make-renderable (symbol-append 'make- name '-renderable))
-            (fast-funs (symbol-append name '-fast-render-functions)))
-       `(export ,name ,render ,make-renderable ,fast-funs)))))
+     (cons 'export
+           (flatten
+            (let loop ((pipelines (cdr expr)))
+              (if (null? pipelines)
+                  '()
+                  (if (not (symbol? (car pipelines)))
+                      (syntax-error 'export-shader "Expected a pipeline name" expr)
+                      (cons (let* ((name (strip-syntax (car pipelines)))
+                                   (render (symbol-append 'render- name))
+                                   (make-renderable (symbol-append 'make- name
+                                                                   '-renderable))
+                                   (fast-funs (symbol-append name
+                                                             '-fast-render-functions)))
+                              (list name render make-renderable fast-funs))
+                            (loop (cdr pipelines)))))))))))
 
 ) ; glls-render
