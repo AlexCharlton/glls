@@ -40,7 +40,7 @@
                     (cons `(define (,(symbol-append base-name (caar uniforms) '!)
                                     renderable value)
                              (set-renderable-uniform-value! renderable ,i value
-                                                            ,(caar uniforms)))
+                                                            ',(caar uniforms)))
                           (loop (cdr uniforms) (add1 i))))))))
        (exp (syntax-error 'renderable-setters "Bad arguments" exp))))))
 
