@@ -49,7 +49,7 @@
     "GLLSrenderable2 *renderable = (GLLSrenderable2 *) data;
      renderable->offset = offset;"))
 
-(define (set-renderable-uniform-value! data i value)
+(define (set-renderable-uniform-value! data i value uniform)
   (cond
    ((f32vector? value)
     ((foreign-lambda* void
@@ -77,7 +77,8 @@
        "GLLSrenderable1024 *renderable = (GLLSrenderable1024 *) data;
        renderable->uniformValues[i] = (void *) value;") data i
        (address->pointer value)))
-   (else (error 'set-renderable-uniform-value! "Invalid type" value))))
+   (else (error 'set-renderable-uniform-value! "Invalid type for uniform"
+                value uniform))))
 
 (define set-renderable-uniform-location!
   (foreign-lambda* void ((c-pointer data) (int size) (int i) (int location))
@@ -502,7 +503,8 @@
                (loc (cadr u)))
           (set-renderable-uniform-location! renderable n i loc)
           (set-renderable-uniform-value! renderable i
-                                         (get-arg (symbol->keyword name))))
+                                         (get-arg (symbol->keyword name))
+                                         name))
         (loop (cdr uniforms) (add1 i))))
     renderable))
 
