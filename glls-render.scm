@@ -139,8 +139,17 @@
                                    (make-renderable (symbol-append 'make- name
                                                                    '-renderable))
                                    (fast-funs (symbol-append name
-                                                             '-fast-render-functions)))
-                              (list name render make-renderable fast-funs))
+                                                             '-fast-render-functions))
+                                   (set-base (symbol-append 'set- name '-renderable-))
+                                   (set-vao (symbol-append set-base 'vao!))
+                                   (set-n-elements (symbol-append set-base 'n-elements!))
+                                   (set-element-type (symbol-append set-base 'element-type!))
+                                   (set-mode (symbol-append set-base 'mode!))
+                                   (set-offset (symbol-append set-base 'offset!)))
+                              (list name render make-renderable fast-funs
+                                    set-vao set-n-elements set-element-type
+                                    set-mode set-offset))
                             (loop (cdr pipelines)))))))))))
+
 
 ) ; glls-render
