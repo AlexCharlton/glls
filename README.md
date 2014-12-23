@@ -287,7 +287,7 @@ One major assumption must be kept in mind while working with the fast render fun
 #### Utilities
     [macro] (export-pipeline . PIPELINES)
 
-Since glls-render causes `define-pipeline` to define multiple functions, this macro exports everything related to each pipeline in `PIPELINES`.
+Since glls-render causes `define-pipeline` to define multiple functions, this macro exports everything related to each pipeline in `PIPELINES`, except for the `set-SHADER-NAME-renderable-UNIFORM!` setters. These must be exported individually.
 
 
 ## Examples
