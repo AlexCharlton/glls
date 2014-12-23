@@ -45,4 +45,4 @@
    "glls-compiler.so" "glls-compiler.import.so"
    "glls-render.so" "glls-render.import.so"
    "glls-renderable.so" "glls-renderable.import.so")
- '((version "0.8.0")))
+ '((version "0.8.1")))
