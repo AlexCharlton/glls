@@ -282,7 +282,9 @@ When compiled, the render function defined by `define-pipeline` is actually a co
 
 `define-pipeline` does not define all of these functions separately, but instead defines a single function with which to access them: `PIPELINE-NAME-fast-render-functions`. This function returns eight values: the begin render function, the render function, the end render function, the array render function, and pointers to those same C functions in that order.
 
-One major assumption must be kept in mind while working with the fast render functions: textures are only bound once. In other words: it is assumed that that all of the renderables belonging to the same pipeline share a common “sprite sheet” (or other shared texture type). If this assumption does not hold true, simply use the standard render function, or call the begin render function for every set of renderables that uses a separate texture.
+    [parameter] unique-textures?
+
+This parameter, defaulting to `#t`, controls where textures are bound in the fast render functions. When `unique-textures?` is `#t`, textures are bound in the main render function. When `unique-textures?` is `#f`, textures are bound in the begin render function. In other words: when `unique-textures?` is `#f`, it is assumed that that all of the renderables belonging to the same pipeline share a common “sprite sheet” (or other shared texture type). This parameter must be set for syntax (i.e. in a `begin-for-syntax` form) in order to have an effect.
 
 #### Utilities
     [macro] (export-pipeline . PIPELINES)
