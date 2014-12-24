@@ -7,6 +7,7 @@
                          set-renderable-mode!
                          set-renderable-offset!
                          set-renderable-uniform-value!
+                         unique-textures?
                          gllsRender.h
                          renderable-size)
 
@@ -382,6 +383,8 @@
                          (length uniforms)
                          2)))
 
+(define unique-textures? (make-parameter #t))
+
 (define (render-functions prefix name uniforms)
   (let* ((renderable-struct (string->symbol
                              (string-append
@@ -410,9 +413,14 @@
                   (%fun void ,fast-fun-begin-name (((const ,renderable-struct *)
                                                     data))
                         (glUseProgram (%-> data program))
-                        ,@sampler-binders)
+                        ,@(if unique-textures?
+                              '()
+                              sampler-binders))
                   (%fun void ,fast-fun-name (((const ,renderable-struct *)
                                               data))
+                        ,@(if unique-textures?
+                              sampler-binders
+                              '())
                         ,@uniform-binders
                         (glBindVertexArray (%-> data vao))
                         (glDrawElements (%-> data mode)

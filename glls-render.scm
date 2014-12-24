@@ -8,7 +8,7 @@
                    glls-renderable matchable miscmacros data-structures)
 
 (reexport (except glls define-pipeline)
-          (only glls-renderable renderable-size))
+          (only glls-renderable renderable-size unique-textures?))
 
 (begin-for-syntax
  (require-library glls-renderable)
