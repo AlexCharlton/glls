@@ -359,6 +359,13 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
+### Version 0.9.0
+24 December 2014
+
+- Add `unique-textures?` parameter
+- `export-pipeline` exports primary setters
+- Better renderable setter error values
+
 ### Version 0.8.0
 8 December 2014
 
