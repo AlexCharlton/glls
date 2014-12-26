@@ -261,17 +261,17 @@ See the [`glDrawElements` documentation](https://www.opengl.org/sdk/docs/man/htm
 
 `make-SHADER-NAME-renderable` also expects one keyword argument for each uniform in the pipeline. These arguments should either be an f32vector, an s32vector, a u32vector, a pointer to the uniform data, or – in the case of a texture – a fixnum. Even if the uniform is a single value (e.g. a float), it must still be passed as a vector (or a pointer). This lets the value of the uniform be updated independently of the renderable.
 
-Additionally, `define-pipeline` defines a number of renderable setters for each of the keyword arguments accepted by `make-SHADER-NAME-renderable`. These are named:
+Additionally, there are a number of renderable setters for each of the keyword arguments accepted by `make-SHADER-NAME-renderable`:
 
-- `set-SHADER-NAME-renderable-vao!`
-- `set-SHADER-NAME-renderable-mode!`
-- `set-SHADER-NAME-renderable-n-elements!`
-- `set-SHADER-NAME-renderable-element-type!`
-- `set-SHADER-NAME-renderable-offset!`
+    [procedure] (set-renderable-vao! RENDERABLE VAO)
+    [procedure] (set-renderable-n-elements! RENDERABLE N-ELEMENTS)
+    [procedure] (set-renderable-element-type! RENDERABLE TYPE)
+    [procedure] (set-renderable-mode! RENDERABLE MODE)
+    [procedure] (set-renderable-offset! RENDERABLE OFFSET)
 
 These setters accept two arguments: a renderable and a value. The values correspond to those that `make-SHADER-NAME-renderable` accepts.
 
-And for each uniform in the pipeline, `set-SHADER-NAME-renderable-UNIFORM-NAME!` is created.
+And for each uniform in the pipeline, `set-SHADER-NAME-renderable-UNIFORM-NAME!` is also created.
 
     [procedure] (renderable-size PIPELINE)
 
