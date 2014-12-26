@@ -8,7 +8,15 @@
                    glls-renderable matchable miscmacros data-structures)
 
 (reexport (except glls define-pipeline)
-          (only glls-renderable renderable-size unique-textures?))
+          (only glls-renderable
+                renderable-size
+                unique-textures?
+                set-renderable-vao!
+                set-renderable-n-elements!
+                set-renderable-element-type!
+                set-renderable-mode!
+                set-renderable-offset!
+                set-renderable-uniform-value!))
 
 (begin-for-syntax
  (require-library glls-renderable)
@@ -24,16 +32,6 @@
       ((_ name uniforms)
        (let ((base-name (symbol-append 'set- name '-renderable-)))
          `(begin
-            (define (,(symbol-append base-name 'vao!) renderable vao)
-              (set-renderable-vao! renderable vao))
-            (define (,(symbol-append base-name 'n-elements!) renderable n)
-              (set-renderable-n-elements! renderable n))
-            (define (,(symbol-append base-name 'element-type!) renderable type)
-              (set-renderable-element-type! renderable type))
-            (define (,(symbol-append base-name 'mode!) renderable mode)
-              (set-renderable-mode! renderable mode))
-            (define (,(symbol-append base-name 'offset!) renderable offset)
-              (set-renderable-offset! renderable offset))
             ,@(let loop ((uniforms uniforms) (i 0))
                 (if (null? uniforms)
                     '()
@@ -139,16 +137,8 @@
                                    (make-renderable (symbol-append 'make- name
                                                                    '-renderable))
                                    (fast-funs (symbol-append name
-                                                             '-fast-render-functions))
-                                   (set-base (symbol-append 'set- name '-renderable-))
-                                   (set-vao (symbol-append set-base 'vao!))
-                                   (set-n-elements (symbol-append set-base 'n-elements!))
-                                   (set-element-type (symbol-append set-base 'element-type!))
-                                   (set-mode (symbol-append set-base 'mode!))
-                                   (set-offset (symbol-append set-base 'offset!)))
-                              (list name render make-renderable fast-funs
-                                    set-vao set-n-elements set-element-type
-                                    set-mode set-offset))
+                                                             '-fast-render-functions)))
+                              (list name render make-renderable fast-funs))
                             (loop (cdr pipelines)))))))))))
 
 
