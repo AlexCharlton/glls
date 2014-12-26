@@ -359,6 +359,11 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
+### Version 0.10.0
+25 December 2014
+
+- Export `set-renderable-*!` functions
+
 ### Version 0.9.0
 24 December 2014
 
