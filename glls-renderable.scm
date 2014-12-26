@@ -6,7 +6,6 @@
                          set-renderable-element-type!
                          set-renderable-mode!
                          set-renderable-offset!
-                         set-renderable-uniform-value!
                          unique-textures?
                          gllsRender.h
                          renderable-size)

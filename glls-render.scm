@@ -15,8 +15,7 @@
                 set-renderable-n-elements!
                 set-renderable-element-type!
                 set-renderable-mode!
-                set-renderable-offset!
-                set-renderable-uniform-value!))
+                set-renderable-offset!))
 
 (begin-for-syntax
  (require-library glls-renderable)
