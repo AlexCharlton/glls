@@ -45,10 +45,11 @@
       renderable->mode = mode;")
    renderable (gl:mode->gl mode)))
 
-(define set-renderable-offset!
-  (foreign-lambda* void ((c-pointer data) (c-pointer offset))
-    "GLLSrenderable2 *renderable = (GLLSrenderable2 *) data;
-     renderable->offset = offset;"))
+(define (set-renderable-offset! renderable offset)
+  ((foreign-lambda* void ((c-pointer data) (c-pointer offset))
+     "GLLSrenderable2 *renderable = (GLLSrenderable2 *) data;
+     renderable->offset = offset;")
+   renderable (address->pointer offset)))
 
 (define (set-renderable-uniform-value! data i value uniform)
   (cond
@@ -503,7 +504,7 @@
           (set-renderable-mode! renderable (get-arg #:mode (lambda () #:triangles)))
           (set-renderable-element-type! renderable (get-arg #:element-type))
           (set-renderable-n-elements! renderable (get-arg #:n-elements))))
-    (set-renderable-offset! renderable (get-arg #:offset (lambda () #f)))
+    (set-renderable-offset! renderable (get-arg #:offset (lambda () 0)))
     (let loop ((uniforms uniforms) (i 0))
       (unless (null? uniforms)
         (let* ((u (car uniforms))
