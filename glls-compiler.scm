@@ -48,7 +48,9 @@
 (define shader-types
   '(#:vertex #:fragment #:geometry #:tess-control #:tess-evaluation #:compute))
 
-(define glsl-version (make-parameter 330))
+(define glsl-version (make-parameter (cond-expand
+                                       (gles 120)
+                                       (else 330))))
 (define exports (make-parameter '()))
 (define export-prototypes (make-parameter '()))
 
