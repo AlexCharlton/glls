@@ -7,6 +7,8 @@ The idea for glls was hugely inspired by [Varjo](https://github.com/cbaggers/var
 
 That said, while this library bears some superficial resemblance to Varjo, the approach is quite different. While Varjo does a lot of work to validate the the lispy-glls expressions (including type checking), glls only performs cursory syntactic checking. The result of this is that one could probably write shaders in Varjo without knowing the GLSL and could be reasonably sure that those shaders would always compile to something that would mostly work. glls makes no such promises, so it is entirely possible to generate GLSL that won’t compile. Being able to understand GLSL code is therefore a prerequisite for successful shader debugging. The GLSL code output by glls is beautifully formatted, thanks to Alex Shinn’s amazing [fmt](http://synthcode.com/scheme/fmt/) library. fmt is responsible for far more than just the GLSL formatting, since it is basically a compiler of its own. The compilation portion of glsl is more or less a thin layer on top of fmt.
 
+glls is known to work on Linux, Mac OS X, Windows, and with OpenGL ES. glls will automatically compile with ES support on ARM hardware, or when `gles` is defined during compilation (e.g. `chicken-install -D gles`).
+
 ## Installation
 This repository is a [Chicken Scheme](http://call-cc.org/) egg.
 
@@ -25,7 +27,7 @@ glls contains three modules: glls-render, glls, and glls-compiler. glls-render r
 
     [parameter] glsl-version
 
-The default GLSL version used by shaders. Defaults to `330`.
+The default GLSL version used by shaders. Defaults to `120` on GL ES platforms, `330` otherwise.
 
 ### Shaders
     [record] (shader TYPE SOURCE INPUTS OUTPUTS UNIFORMS PROGRAM)
