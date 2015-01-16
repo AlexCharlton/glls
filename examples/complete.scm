@@ -12,7 +12,7 @@
 ;;;; Use arrow keys to rotate, zoom camera.
 
 (import chicken scheme)
-(use glls-render gl-math gl-utils (prefix glfw3 glfw:) (prefix opengl-glew gl:))
+(use glls-render gl-math gl-utils (prefix glfw3 glfw:) (prefix opengl-glew gl:) srfi-4)
 
 ;;; Matrices
 (define projection-matrix (perspective 640 480 0.01 100 70))
@@ -20,7 +20,7 @@
 (define model-matrix (rotate-y (degrees->radians 90)
                                (rotate-x (degrees->radians -90)
                                          (mat4-identity #t))))
-(define mvp (make-parameter (make-f32vector 16)))
+(define mvp (make-parameter (make-f32vector 16 #f #t)))
 (define inverse-transpose-model
   (transpose (inverse model-matrix) #t))
 
