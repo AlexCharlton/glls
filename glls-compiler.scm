@@ -66,23 +66,18 @@
   (define (valid-keys? keys)
     (for-each (lambda (k)
                 (unless (or (not (keyword? k))
-                            (member k '(input: output: uniform: version: extensions:
-                                               pragmas: use: export:)))
+                            (member k '(input: output: uniform: version: use: export:)))
                   (syntax-error "Key not recognized:" k)))
               keys))
   (define (compile type body #!key
                    (input '()) (output '()) (uniform '())
-                   (version (glsl-version)) (extensions '()) (pragmas '())
+                   (version (glsl-version))
                    (use '()) (export '()))
     (parameterize ((exports export)
                    (export-prototypes '()))
       (let-values (((declarations in out uni) (compile-inputs input output uniform
                                                               version type)))
         (values (fmt #f (cat "#version " (number->string version) "\n\n"
-                             (apply-cat (map (lambda (e) (cat "#extension" e #\newline))
-                                             extensions))
-                             (apply-cat (map (lambda (e) (cat "#pragma" e #\newline))
-                                             pragmas))
                              (if (null? use)
                                  ""
                                  "<<imports>>\n")
@@ -298,7 +293,9 @@
      (~~ . ,glsl:swizzle)
      (struct . ,glsl:struct)
      (define-record . ,glsl:struct)
-     (do-times . ,glsl:do-times))))
+     (do-times . ,glsl:do-times)
+     (%extension . (lamnda (x) (cat "#extension " (first x)
+                                    " : " (second x) #\newline))))))
 
 (define *special-functions*
   (alist->hash-table
@@ -378,6 +375,15 @@
      (--/post . ,c--/post)
 
      (.. . ,c.)
-     (field . ,c.))))
+     (field . ,c.)
+
+     (%define . ,cpp-define)
+     (%if . ,cpp-if)
+     (%ifdef . ,cpp-ifdef)
+     (%ifndef . ,cpp-ifndef)
+     (%elif . ,cpp-elif)
+     (%else . ,cpp-else)
+     (%pragma . ,cpp-pragma)
+     (%error . ,cpp-error))))
 
 ) ; end module
