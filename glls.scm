@@ -24,8 +24,9 @@
    %delete-shader
    %delete-pipeline)
 
-(import chicken scheme srfi-69 srfi-1 miscmacros)
-(use glls-compiler (prefix opengl-glew gl:) (prefix gl-utils-core gl:) matchable extras)
+(import chicken scheme)
+(use glls-compiler (prefix opengl-glew gl:) (prefix gl-utils-core gl:) matchable extras
+      srfi-69 srfi-1 miscmacros)
 (import-for-syntax glls-compiler)
 
 (reexport glls-compiler)
