@@ -85,7 +85,7 @@
   (test "#pragma STDGL invariant(all)\n"
         (compile-expr '(%pragma #:stdgl (invariant all))))
   (test "#extension GL_ARB_arrays_of_arrays : enable\n"
-        (compile-expr '(%extension GL_ARB_arrays_of_arrays enable))))
+        (compile-expr '(%extension GL_ARB_arrays_of_arrays enable)))
     ); end test-group "expressions"
 
 (test-group "shaders"
