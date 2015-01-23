@@ -294,8 +294,15 @@
      (struct . ,glsl:struct)
      (define-record . ,glsl:struct)
      (do-times . ,glsl:do-times)
-     (%extension . (lamnda (x) (cat "#extension " (first x)
-                                    " : " (second x) #\newline))))))
+     (%extension . ,(lambda (name behaviour) (cat "#extension " name
+                                             " : " behaviour #\newline)))
+     (%pragma . ,(match-lambda*
+                   ((#:stdgl (n . b)) (cat "#pragma STDGL "
+                                           n "(" (fmt-join dsp b ", ")
+                                           ")" #\newline))
+                   ((n . b) (cat "#pragma "
+                                n "(" (fmt-join dsp b ", ")
+                                ")" #\newline)))))))
 
 (define *special-functions*
   (alist->hash-table
@@ -383,7 +390,6 @@
      (%ifndef . ,cpp-ifndef)
      (%elif . ,cpp-elif)
      (%else . ,cpp-else)
-     (%pragma . ,cpp-pragma)
      (%error . ,cpp-error))))
 
 ) ; end module
