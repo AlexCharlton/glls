@@ -386,6 +386,13 @@ This example is similar to the first, but also illustrates the ability to define
 ```
 
 ## Version history
+### Version 0.11.0
+23 January 2014
+
+- Overhaul compiler so new syntax can be introduced, and so existing syntax more closely maps to GLSL
+- Add array initialization
+- Move `pragma` and `extension` from keywords to forms
+
 ### Version 0.10.0
 25 December 2014
 
