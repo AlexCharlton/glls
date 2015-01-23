@@ -1,4 +1,4 @@
-(use test glls-compiler)
+(use test glls-compiler glls)
 
 (test-group "renaming"
   (test 'gl_Position (symbol->glsl 'gl:position))
@@ -80,6 +80,12 @@
         (compile-expr '(define (foo (x int)) int x)))
   (test "int foo[5] = int[](1, bar(1), 3, 4, 5);\n"
         (compile-expr '(define foo (array: int 5) #(1 (bar 1) 3 4 5))))
+  (test "#define foo 1\n"
+        (compile-expr '(%define foo 1)))
+  (test "#pragma STDGL invariant(all)\n"
+        (compile-expr '(%pragma #:stdgl (invariant all))))
+  (test "#extension GL_ARB_arrays_of_arrays : enable\n"
+        (compile-expr '(%extension GL_ARB_arrays_of_arrays enable))))
     ); end test-group "expressions"
 
 (test-group "shaders"
@@ -108,6 +114,18 @@
                           (set! gl:frag-color (vec4 c 1.0))))))
   ) ; end test-group shaders
 
-;; TODO test exports
+(define-shader foo
+    (#:vertex export: (quox))
+  (define (quox (x #:int)) #:float
+    (* x 2.0)))
+
+(define-shader bar
+    (#:vertex use: (foo))
+  (define (main) #:void
+    (quox 1)))
+
+(test-group "defines"
+   (test  "#version 330\n\nfloat quox (int x);\n\nvoid main () {\n    quox(1);\n}\n"
+         (shader-source bar)))
 
 (test-exit)
