@@ -95,8 +95,7 @@ Return a list of `(ATTRIBUTE-NAME . LOCATION)` pairs, suitable for passing to [g
 The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. expect – have the following syntax:
 
     (<type> [input: <inputs>] [uniform: <uniforms>] [output: <outputs>]
-            [version: <version>] [extensions: <extensions>] [pragmas: <pragmas>]
-            [use: <imports>] [export: <exports]) 
+            [version: <version>] [use: <imports>] [export: <exports])
     <body> ...
 
 `type` is the keyword type of the shader. It must be one of `#:vertex`, `#:fragment`, `#:geometry`, `#:tess-control`, `#:tess-evaluation`, or `#:compute`.
@@ -109,10 +108,6 @@ The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. 
 
 `version` is the integer version number of the shader, i.e. the number you would write at the top of the shader source (e.g. `#version 410`). Defaults to the `glsl-version` parameter.
 
-`extensions` is the list of GLSL extensions desired (in string form). E.g. `("GL_EXT_gpu_shader4 : enable")`. Defaults to `()`
-
-`pragmas` is the list of GLSL pragmas desired (in string form). E.g. `("optimize(on)")`. Defaults to `()`
-
 `imports` is the list of shaders that the current shader depends on. See the section [Shaders that export](#shaders-that-export) for more details. Defaults to `()`
 
 `exports` is the list of symbols that the current shader exports. See the section [Shaders that export](#shaders-that-export) for more details. Defaults to `()`
@@ -123,7 +118,7 @@ The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. 
 #### Shader Lisp
 For the most part, the Lisp used to define glls shaders looks like Scheme with one notable difference: types must be specified whenever a variable or function is defined. Under the hood, forms are being passed to [fmt](https://wiki.call-cc.org/eggref/4/fmt#c-as-s-expressions), so everything that you can do there will work in glls. Details of the Lisp used for shaders is provided in the following sections.
 
-It should be possible to do almost anything in glls that you would want to do with the GLSL. Known exceptions to this is are: layout qualifiers (which I don’t feel are terribly relevant in the context of Scheme, at least not until uniform locations become prevalent), do-while loops (which have no Scheme analog), uniform blocks (for no good reason), `#error`, `#line`, `#undef`, and struct uniforms (implementation reasons). Let me know if there are any features that you find lacking.
+It should be possible to do almost anything in glls that you would want to do with the GLSL. Known exceptions to this is are: layout qualifiers (which I don’t feel are terribly relevant in the context of Scheme, at least not until uniform locations become prevalent), do-while loops (which have no Scheme analog), and uniform blocks, `#line`, `#undef`, and struct uniforms all for no good reason. Let me know if there are any features that you find lacking.
 
 Keep in mind that glls cannot do anything that the GLSL can’t, such as making anonymous or recursive functions.
 
@@ -149,14 +144,21 @@ The following is a mapping between glls aliases for GLSL functions and operators
 * `and`: `&&`
 * `or`: `||`
 * `not`: `!`
-* `bitwise-and`, `bit-or`: `&`
-* `bitwise-ior`, `bit-or`: `|`
-* `bitwise-xor`, `bit-xor`: `^`
-* `bitwise-not`, `bit-not`: `~`
+* `bitwise-and`: `&`
+* `bitwise-ior`: `|`
+* `bitwise-xor`: `^`
+* `bitwise-not`: `~`
 * `arithmetic-shift`: `<<`
+* `bitwise-and=`: `&=`
+* `bitwise-ior=`: `|=`
+* `bitwise-xor=`: `^=`
+* `arithmetic-shift=`: `<<=`
+* `++/post`: Postfix `++`
+* `--/post`: Postfix `--`
 * `field`, `..`: `.` (struct field reference, e.g. `(field point x)` → `point.x`)
 * `swizzle`, `~~`: `.` (vector swizzling, e.g. `(swizzle color r g)` → `color.rg`)
 * `array-ref`, `vector-ref`: `[]` (array reference, e.g. `(array-ref a 4)` → `a[4]`)
+* `array-set!`, `vector-set!`: `[] =` (array setting, e.g. `(array-set! a 4 x)` → `a[4] = x`)
 * `length`: `.length()` (vector length, e.g. `(length vec)` → `vec.length()`)
 
 ##### Definition
@@ -164,7 +166,7 @@ Variables, functions, and records (structs) are defined much like they are in Sc
 
     (define <name> <type> [<value>])
 
-Defines the variable `name`. When `type` is an array, a vector literal (eg. `#(1 2 3)`) may be used.
+Defines the variable `name`. When `type` is an array, a vector literal (eg. `#(1 2 3)`) may be used as the initial `value`.
 
     (define (<name> [(<parameter> <type>) ...]) <return-type> <body> ...)
 
@@ -172,7 +174,7 @@ Defines the function `name`. The last expression in the body of a non-void funct
 
     (let ((<name> <type> [<value>]) ...) <body> ...)
 
-Defines the supplied variables. When `type` is an array, a vector literal (eg. `#(1 2 3)`) may be used. Note that, unlike Scheme, the variables created will continue to exist outside of the `let` (until the extent of whatever lexical scope the `let` exists within). In other words, `let` does not introduce scope. Note also that variables defined in `let` are within the scope of variables that are subsequently defined in the same `let` (i.e. `let` functions like `let*` in Scheme, and in fact `let*` may be used if preferred).
+Defines the supplied variables. When `type` is an array, a vector literal (eg. `#(1 2 3)`) may be used as the initial `value`. Note that, unlike Scheme, the variables created will continue to exist outside of the `let` (until the extent of whatever lexical scope the `let` exists within). In other words, `let` does not introduce scope. Note also that variables defined in `let` are within the scope of variables that are subsequently defined in the same `let` (i.e. `let` functions like `let*` in Scheme, and in fact `let*` may be used if preferred).
 
     (define-record <name> (<type> <field>) ...)
 
@@ -185,11 +187,19 @@ The following can be used with identical syntax to scheme:
 
     (cond (<test> <result> ...) ... (else <result>))
 
-    (case <key> ((<value> ...) <result> ...) ... (else <result>))
-
     (begin <body> ...)
 
 Keep in mind that they may only be used in the same place as their corresponding GLSL statements, with the exception of `begin`, which can only be used where it is possible to have multiple expressions.
+
+Additionally, the following forms can be used for switch/case statements in the GLSL fashion:
+
+    (c-switch <clause> ...)
+
+    (c-case <values> <body> ...)
+
+    (c-case/fallthrough <values> <body> ...)
+
+    (c-default <body> ...) 
 
 ##### Iteration
     (for <init> <condition> <update> <body> ...)
@@ -217,6 +227,21 @@ The following forms can be used to add pre-processor directives:
     (%ifdef <value> <true> [<false>])
 
     (%ifndef <value> <true> [<false>])
+
+    (%elif <value> <true> [<false>])
+
+    (%else <fallback>)
+
+    (%error <value> ...)
+
+    (%pragma [#:stdgl] <name> <behaviour>)
+
+The optional `#:stdgl` keyword is used when a `STDGL` pragma is desired. `<name>` and `<behaviour>` will be formatted without modification as `<name>(<behaviour>)`.
+
+    (%extension <name> <behaviour>)
+
+`<name>` and `<behaviour>` will be formatted without modification as `<name> : <behaviour>`.
+
 
 ### Shaders that export
 It is often desirable to have shaders that contain generic, reusable functions. These shaders are linked into the pipeline (or program, in GLSL parlance) so that they can be accessed by other shaders. In order for another shader to reuse a function, it first has to (as in C) include a function prototype. glsl automates this process.
