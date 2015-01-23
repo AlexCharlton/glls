@@ -74,7 +74,7 @@
                    (input '()) (output '()) (uniform '())
                    (version (glsl-version)) (extensions '()) (pragmas '())
                    (use '()) (export '()))
-    (parameterize ((exports (map symbol->glsl export))
+    (parameterize ((exports export)
                    (export-prototypes '()))
       (let-values (((declarations in out uni) (compile-inputs input output uniform
                                                               version type)))
@@ -86,7 +86,9 @@
                              (if (null? use)
                                  ""
                                  "<<imports>>\n")
-                             (apply c-begin declarations)
+                             (if (null? declarations)
+                                 ""
+                                 (apply c-begin declarations))
                              (apply c-begin (map glsl->fmt body))))
                 in out uni use (fmt #f (apply-cat (export-prototypes)))))))
   (match form
