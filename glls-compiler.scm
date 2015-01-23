@@ -20,9 +20,10 @@
    %make-shader
    %create-shader)
 
-(import chicken scheme data-structures srfi-1 srfi-69)
+(import chicken scheme)
 
-(use fmt fmt-c matchable srfi-42 miscmacros irregex)
+(use extras data-structures srfi-1 srfi-69
+     fmt fmt-c matchable miscmacros irregex)
 
 ;;; Shader record
 (define-record shader
@@ -65,8 +66,8 @@
   (define (valid-keys? keys)
     (for-each (lambda (k)
                 (unless (or (not (keyword? k))
-                           (member k '(input: output: uniform: version: extensions:
-                                              pragmas: use: export:)))
+                            (member k '(input: output: uniform: version: extensions:
+                                               pragmas: use: export:)))
                   (syntax-error "Key not recognized:" k)))
               keys))
   (define (compile type body #!key
@@ -77,21 +78,17 @@
                    (export-prototypes '()))
       (let-values (((declarations in out uni) (compile-inputs input output uniform
                                                               version type)))
-        (values (fmt #f "#version " (number->string version) "\n\n"
-                     (fmt-join dsp
-                               (list-ec (: e extensions)
-                                        (fmt #f "#extension " e  #\newline)))
-                     (fmt-join dsp
-                               (list-ec (: p pragmas)
-                                        (fmt #f "#pragma " p #\newline)))
-                     (if (null? use)
-                         ""
-                         "<<imports>>\n")
-                     (c-expr (cons '%begin
-                                   (append declarations (map glsl->fmt body)))))
-                in out uni use (apply string-append
-                                (map (lambda (p) (fmt #f (c-expr p)))
-                                     (export-prototypes)))))))
+        (values (fmt #f (cat "#version " (number->string version) "\n\n"
+                             (apply-cat (map (lambda (e) (cat "#extension" e #\newline))
+                                             extensions))
+                             (apply-cat (map (lambda (e) (cat "#pragma" e #\newline))
+                                             pragmas))
+                             (if (null? use)
+                                 ""
+                                 "<<imports>>\n")
+                             (apply c-begin declarations)
+                             (apply c-begin (map glsl->fmt body))))
+                in out uni use (fmt #f (apply-cat (export-prototypes)))))))
   (match form
     ((((? shader-type? shader-type) . (? valid-keys? keys)) body . body-rest)
      (apply compile shader-type (cons* body body-rest) keys))
@@ -101,35 +98,39 @@
   (define (in/out-type->glsl-type type)
     (cond
      ((or (>= version 330)
-         (equal? type 'uniform)) type)
+          (equal? type 'uniform)) type)
      ((and (equal? shader-type #:vertex)
-         (equal? type 'in)) 'attribute)
+           (equal? type 'in)) 'attribute)
      (else 'varying)))
   (define (params p type)
-    (list-ec (: i p) (match-let (((t name) (glsl->fmt (parameter i))))
-                       `(%var ,(list (in/out-type->glsl-type type) t) ,name))))
+    (map (lambda (param)
+           (let ((p (parameter param)))
+             (c-var (list (in/out-type->glsl-type type)
+                          (first p))
+                    (second p))))
+         p))
   (define (name-type p)
-    (list-ec (: i p)
-             (cons (car i)
-                   (cadr i))))
+    (map (lambda (p) (cons (first p) (second p)))
+         p))
   (values (append (params in 'in)
                   (params out 'out)
                   (params uniform 'uniform))
           (name-type in) (name-type out) (name-type uniform)))
 
 (define (compile-expr expr)
-  (fmt #f (c-expr (glsl->fmt expr))))
+  (fmt #f (glsl->fmt expr)))
 
-(define (glsl->fmt tree)
-  (let ((t (list-ec (: el tree)
-                    (cond
-                     ((symbol? el) (symbol->glsl el))
-                     ((boolean? el) (if el 'true 'false))
-                     ((list? el) (glsl->fmt el))
-                     (else el)))))
-    (if* (hash-table-ref/default *special-functions* (car tree) #f)
-         (apply it t)
-         t)))
+(define (glsl->fmt x)
+  (cond
+   ((symbol? x) (c-wrap-stmt (symbol->glsl x)))
+   ((boolean? x) (c-wrap-stmt (dsp (if x 'true 'false))))
+   ((list? x)
+    (if* (hash-table-ref/default *special-syntax* (car x) #f)
+         (apply it (cdr x))
+         (if* (hash-table-ref/default *special-functions* (car x) #f)
+              (apply it (map glsl->fmt (cdr x)))
+              (c-apply (map glsl->fmt x)))))
+   (else (c-wrap-stmt (dsp x)))))
 
 (define (symbol->glsl sym)
   (define (cammel-case str)
@@ -159,105 +160,222 @@
   (lambda (x . rest)
     (cons symbol rest)))
 
-(define glsl:swizzle
-  (match-lambda*
-   ((_ vec . (? (list-of? symbol?) x)) `(%. ,vec ,(apply symbol-append x)))
-   (args (syntax-error 'swizzle "Poorly formed arguments:" args))))
-
 (define glsl:length
   (match-lambda*
-   ((_ vec) `(%. ,vec (length)))
-   (args (syntax-error 'length "Only one argument expected:" args))))
+    ((vec) (c-wrap-stmt (cat vec ".length()")))
+    (args (syntax-error 'length "Only one argument expected:" args))))
 
 (define (type? x)
   (or (symbol? x)
       ((list-of? symbol?) x)))
 
+(define (type->glsl x)
+  (if (list? x)
+      (map symbol->glsl x)
+      (symbol->glsl x)))
+
 (define parameter
   (match-lambda
-   ((name ((or '#:array 'array) (? type? type) . size))
-    `((%array ,type . ,size) ,name))
-   ((name (? type? type))
-    `(,type ,name))
-   (p (syntax-error "Invalid parameter:" p))))
+    ((name ((or '#:array 'array) (? type? type) . size))
+     (list (cons* '%array (type->glsl type) size) (symbol->glsl name)))
+    ((name (? type? type))
+     (list (type->glsl type) (symbol->glsl name)))
+    (p (syntax-error "Invalid parameter:" p))))
 
 (define assignment
   (match-lambda*
-   ((name ((or '#:array 'array) (? type? type) . size) . init)
-    (when (member name (exports))
-      (export-prototypes
-       (cons `(%var (%array ,type . ,size) ,name)
-             (export-prototypes))))
-    `(%var (%array ,type . ,size) ,name . ,init))
-   ((name (? type? type) . init)
-    (when (member name (exports))
-      (export-prototypes
-       (cons `(%var ,type ,name)
-             (export-prototypes))))
-    `(%var ,type ,name . ,init))
-   (expr (syntax-error "Poorly formed assignment:" expr))))
+    ((name ((or '#:array 'array) (? type? type) . size) . init)
+     (when (member name (exports))
+       (export-prototypes
+        (cons (c-var `(%array ,(type->glsl type) . ,size) (symbol->glsl name))
+              (export-prototypes))))
+     (apply c-var `(%array ,(type->glsl type) . ,size)
+            (symbol->glsl name)
+            (cond
+             ((null? init)'())
+             ((vector? (car init)) 
+              (list (cat (type->glsl type)
+                         "[]("
+                         (fmt-join c-expr
+                                   (map glsl->fmt
+                                        (vector->list (car init)))
+                                   ", ")
+                         ")")))
+             (else (list (apply glsl->fmt init))))))
+    ((name (? type? type) . init)
+     (when (member name (exports))
+       (export-prototypes
+        (cons (c-var (type->glsl type) (symbol->glsl name))
+              (export-prototypes))))
+     (apply c-var (type->glsl type)
+            (symbol->glsl name)
+            (if (null? init)
+                '()
+                (list (apply glsl->fmt init)))))
+    (expr (syntax-error "Poorly formed assignment:" expr))))
 
 (define glsl:define
   (match-lambda*
-   ((_ (name . params) (? type? return-type) body . body-rest)
-    (when (member name (exports))
-      (export-prototypes
-       (cons `(%prototype ,return-type ,name ,(map parameter params))
-             (export-prototypes))))
-    `(%fun ,return-type ,name ,(map parameter params) ,body . ,body-rest))
-   ((_ (name . params) (? type? return-type))
-    `(%prototype ,return-type ,name ,(map parameter params)))
-   ((_ . a) (apply assignment a))))
+    (((name . params) (? type? return-type) body . body-rest)
+     (when (member name (exports))
+       (export-prototypes
+        (cons (c-prototype (type->glsl return-type) (symbol->glsl name)
+                           (map parameter params))
+              (export-prototypes))))
+     (apply c-fun (type->glsl return-type) (glsl->fmt name)
+            (map parameter params)
+            (map glsl->fmt (cons body body-rest))))
+    (((name . params) (? type? return-type))
+     (c-prototype (type->glsl return-type) (symbol->glsl name)
+                  (map parameter params)))
+    (a (apply assignment a))))
 
 (define glsl:let
   (match-lambda*
-   ((_ (? list? assignments)  body . body-rest)
-    `(%begin ,@(map (lambda (a) (apply assignment a)) assignments)
-             ,body . ,body-rest))
-   (expr (syntax-error 'let "Poorly formed:" expr))))
+    (((? list? assignments)  body . body-rest)
+     (apply c-begin (append (map (lambda (a) (apply assignment a)) assignments)
+                            (map glsl->fmt (cons body body-rest)))))
+    (expr (syntax-error 'let "Poorly formed:" expr))))
 
 (define glsl:struct
   (match-lambda*
-   ((_ name . fields)
-    `(struct ,name ,(map parameter fields)))
-   (expr (syntax-error 'struct "Poorly formed:" expr))))
+    ((name . fields)
+     (c-struct (symbol->glsl name) (map parameter fields)))
+    (expr (syntax-error 'struct "Poorly formed:" expr))))
 
 (define glsl:do-times
   (match-lambda*
-   ((_ (var end) body . body-rest)
-    `(for (%var int ,var 0) (< ,var ,end) (++ ,var) ,body . ,body-rest))
-   ((_ (var start end) body . body-rest)
-    `(for (%var int ,var ,start) (< ,var ,end) (++ ,var) ,body . ,body-rest))
-   (expr (syntax-error 'do-times "Poorly formed:" expr))))
+    (((var end) body . body-rest)
+     (let ((v (symbol->glsl var)))
+       (apply c-for (c-var 'int v 0)
+              (c< v (glsl->fmt end))
+              (c++ v)
+              (map glsl->fmt (cons body body-rest)))))
+    (((var start end) body . body-rest)
+     (let ((v (symbol->glsl var)))
+       (apply c-for (c-var 'int v (glsl->fmt start))
+              (c< v (glsl->fmt end))
+              (c++ v)
+              (map glsl->fmt (cons body body-rest)))))
+    (expr (syntax-error 'do-times "Poorly formed:" expr))))
 
-(define *special-functions*
+(define glsl:swizzle
+  (match-lambda*
+    ((vec . (? (list-of? symbol?) x))
+     (c-wrap-stmt (cat (symbol->glsl vec) "." (apply symbol-append x))))
+    (args (syntax-error 'swizzle "Poorly formed arguments:" args))))
+
+(define glsl:array-ref
+  (match-lambda*
+    ((array ref) (c-wrap-stmt (cat array "[" ref "]")))
+    (args (syntax-error 'array-ref "Poorly formed arguments:" args))))
+
+(define glsl:array-set!
+  (match-lambda*
+    ((array ref val) (c-wrap-stmt (cat array "[" ref "] = " val)))
+    (args (syntax-error 'array-set! "Poorly formed arguments:" args))))
+
+(define (glsl:cond . x)
+  ;; Adapted from fmt-c
+  (let loop ((ls x) (res '()))
+    (if (null? ls)
+        (glsl->fmt (cons 'if (delete 'else (reverse res))))
+        (loop (cdr ls)
+              (cons (if (pair? (cddar ls))
+                        (cons 'begin (cdar ls))
+                        (cadar ls))
+                    (cons (caar ls) res))))))
+
+(define *special-syntax*
   (alist->hash-table
-   `((modulo . ,(replace '%))
-     (equal? . ,(replace '==))
-     (eqv? . ,(replace '==))
-     (eq? . ,(replace '==))
-     (= . ,(replace '==))
-     (set! . ,(replace '=))
-     (-= . ,(replace '-=)) ; Why does this need to be here?
-     (and . ,(replace '&&))
-     (or . ,(replace '%or))
-     (not . ,(replace '!))
-     (array-ref . ,(replace 'vector-ref))
-     (field . ,(replace '%field))
-     (.. . ,(replace '%field))
-     (begin . ,(replace '%begin))
-     (cond . ,(replace '%cond))
-     (case . ,(replace '%switch))
-     (expt . ,(replace 'pow))
-     (discard . ,(lambda (a) 'discard))
-     (length . ,glsl:length)
-     (swizzle . ,glsl:swizzle)
-     (~~ . ,glsl:swizzle)
+   `((cond . ,glsl:cond)
      (define . ,glsl:define)
      (let . ,glsl:let)
      (let* . ,glsl:let)
-     (define-record . ,glsl:struct)
+     (swizzle . ,glsl:swizzle)
+     (~~ . ,glsl:swizzle)
      (struct . ,glsl:struct)
+     (define-record . ,glsl:struct)
      (do-times . ,glsl:do-times))))
+
+(define *special-functions*
+  (alist->hash-table
+   `((array-ref . ,glsl:array-ref)
+     (vector-ref . ,glsl:array-ref)
+     (array-set! . ,glsl:array-set!)
+     (vector-set! . ,glsl:array-set!)
+     (expt . ,(lambda e (c-apply (cons 'pow e))))
+     (length . ,glsl:length)
+
+     (discard . ,(lambda () (c-wrap-stmt (dsp "discard"))))
+     (break . ,(lambda () (c-wrap-stmt (dsp "break"))))
+     (continue . ,(lambda () (c-wrap-stmt (dsp "continue"))))
+     (return . ,c-return)
+
+     (begin . ,c-begin)
+     (while . ,c-while)
+     (for . ,c-for)
+     (if . ,c-if)
+     (switch . ,c-switch)
+     (case . ,c-case)
+     (case/fallthrough . ,c-case/fallthrough)
+     (default . ,c-default)
+     
+     (++ . ,c++)
+     (-- . ,c--)
+     (+ . ,c+)
+     (- . ,c-)
+     (* . ,c*)
+     (/ . ,c/)
+     (modulo . ,c%)
+     (% . ,c%)
+     (bitwise-and . ,c&)
+     (& . ,c&)
+     (bitwise-xor . ,c^)
+     (^ . ,c^)
+     (bitwise-not . ,c~)
+     (~ . ,c~)
+     (not . ,c!)
+     (! . ,c!)
+     (and . ,c&&)
+     (&& . ,c&&)
+     (arithmetic-shift . ,c<<)
+     (<< . ,c<<)
+     (>> . ,c>>)
+     (bitwise-ior . ,c-bit-or)
+     (or . ,c-or)
+
+     (== . ,c==)
+     (equal? . ,c==)
+     (eqv? . ,c==)
+     (eq? . ,c==)
+     (= . ,c==)
+
+     (!= . ,c!=)
+     (< . ,c<)
+     (> . ,c>)
+     (<= . ,c<=)
+     (>= . ,c>=)
+     (set! . ,c=)
+     (= . ,c=)
+     (+= . ,c+=)
+     (-= . ,c-=)
+     (*= . ,c*=)
+     (/= . ,c/=)
+     (modulo= . ,c%=)
+     (%= . ,c%=)
+     (bitwise-and= . ,c&=)
+     (&= . ,c&=)
+     (bitwise-xor= . ,c^=)
+     (^= . ,c^=)
+     (bitwise-ior= . ,c-bit-or=)
+     (arithmetic-shift= . ,c<<=)
+     (<<= . ,c<<=)
+     (>>= . ,c>>=)
+     (++/post . ,c++/post)
+     (--/post . ,c--/post)
+
+     (.. . ,c.)
+     (field . ,c.))))
 
 ) ; end module

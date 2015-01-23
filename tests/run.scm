@@ -11,6 +11,8 @@
 (test-group "expressions"
   (test "vec4(position, 0.0, 1.0);\n" (compile-expr '(vec4 position 0.0 1.0)))
   (test "1 + 2;\n" (compile-expr '(+ 1 2)))
+  (test "pow(a, 2);\n"
+        (compile-expr '(expt a 2)))
   (test "vec4(position, 0.0, (0.5 + x + y));\n"
         (compile-expr '(vec4 position 0.0 (+ 0.5 x y))))
   (test "position.xyz;\n"
@@ -21,6 +23,9 @@
         (compile-expr '(if (= i 0) 
                            (begin (set! foo 4) (set! bar 5))
                            (set! foo 4.0))))
+  (test "int foo = 1;\nfoo;\n"
+        (compile-expr '(let ((foo #:int 1))
+                         foo)))
   (test "int foo;\nint bar = 4;\nvec4 quox[];\nvec4 baz[4];\nvec4 box[4] = 1(3, 3, 4);\nif (foo == 1) {\n    foo = 4;\n}\n"
         (compile-expr '(let ((foo #:int)
                              (bar #:int 4)
@@ -28,10 +33,12 @@
                              (baz (#:array #:vec4 4))
                              (box (#:array #:vec4 4) (1 3 3 4)))
                          (cond ((= foo 1) (set! foo 4))))))
-  (test "if (x < 0) {\n    y = 1;\n} else if (x < 5) {\n    y = 2;\n} else {\n    y = 3;\n}\n"
+  (test "if (x < 0) {\n    y = 1;\n} else if (x < 5) {\n    x = 1;\n    y = 2;\n} else {\n    y = 3;\n}\n"
         (compile-expr '(cond
                         ((< x 0) (set! y 1))
-                        ((< x 5) (set! y 2))
+                        ((< x 5)
+                         (set! x 1)
+                         (set! y 2))
                         (else (set! y 3)))))
   (test "vec3 foo (in int x, int y) {\n    x = y;\n    return bar;\n}\n"
         (compile-expr '(define (foo (x (in: #:int)) (y #:int)) #:vec3
@@ -47,6 +54,10 @@
   
   (test-error (compile-expr '(let ((foo (#:array #:int 4) (1 2))))))
 
+  (test "a[1];\n"
+        (compile-expr '(array-ref a 1)))
+  (test "a[1] = x;\n"
+        (compile-expr '(array-set! a 1 x)))
   (test "vec4(position, 0.0, 1.0);\n"
         (compile-expr '(vec4 position 0.0 1.0)))
   (test "for (int i = 2; i < 4; ++i) {\n    break;\n}\n"
@@ -65,8 +76,13 @@
         (compile-expr '(define (foo (x int) (y int)) int (+ x y))))
   (test "int foo () {\n    return 5;\n}\n"
         (compile-expr '(define (foo) int 5)))
-  (test "int foo[5] = {1, 2, 3, 4, 5};\n"
-        (compile-expr '(define foo (array: int 5) #(1 2 3 4 5))))
+  (test "int foo (int x) {\n    return x;\n}\n"
+        (compile-expr '(define (foo (x int)) int x)))
+  (test "int foo[5] = int[](1, bar(1), 3, 4, 5);\n"
+        (compile-expr '(define foo (array: int 5) #(1 (bar 1) 3 4 5))))
+    ); end test-group "expressions"
+
+(test-group "shaders"
   (test  "#version 410\n\nin vec2 vertex;\nin vec3 color;\nout vec3 c;\nuniform mat4 viewMatrix;\nvoid main () {\n    gl_Position = viewMatrix * vec4(vertex, 0.0, 1.0);\n    c = color;\n}\n"
          (compile-glls
           '((#:vertex input: ((vertex #:vec2) (color #:vec3))
@@ -90,6 +106,8 @@
                                     #:version 130) 
                         (define (main) #:void
                           (set! gl:frag-color (vec4 c 1.0))))))
-  ); end test-group "expressions"
+  ) ; end test-group shaders
+
+;; TODO test exports
 
 (test-exit)
