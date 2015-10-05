@@ -253,13 +253,13 @@ Shaders that export should not have any inputs or outputs.
 See the example [exports.scm](https://github.com/AlexCharlton/glls/blob/master/examples/exports.scm) to see this in action.
 
 ### Automatic render functions
-By using the `glls-render` module, you can have glls automatically generate a function that will render an object with your glls shader. `glls-render` exports a new `define-pipeline` that defines a set of functions used for rendering and managing the objects that will be rendered. `glls-render` should not be used with the `glls` module: It reexports everything that you need from `glls`.
+By using the `glls-render` module, you can have glls automatically generate functions that will render an object with your glls pipeline. `glls-render` wraps `define-pipeline` so that it also defines a set of functions used for rendering and managing the *renderable* objects that are specific to that pipeline: one to create them, several to render them, and others to manipulate them. `glls-render` should not be used with the `glls` module: It reexports everything that you need from `glls`.
 
 Recalling `define-pipeline`:
 
     (define-pipeline PIPELINE-NAME . SHADERS)
 
-There is one difference that you need to know when calling `glls-render`’s `define-pipeline`: All shaders must include a list of the shader’s uniforms since the uniforms are the important information needed to derive rendering functions. This means that if you previously define some shaders (for example: `my-vertex-shader` and `my-fragment-shader`) and you wish to combine them in a pipeline, you *must* include the uniforms in the pipeline definition. This is done with a list that takes the form `(SHADER uniform: [UNIFORM] ...)`. This list must be present even if the shader does not use any uniforms. For example:
+There is one difference with `glls-render`’s `define-pipeline`: All shaders must include a list of the shader’s uniforms since the uniforms are the important information needed to derive rendering functions. This means that if you previously define some shaders (for example: `my-vertex-shader` and `my-fragment-shader`) and you wish to combine them in a pipeline, you *must* include the uniforms in the pipeline definition. This is done with a list that takes the form `(SHADER uniform: [UNIFORM] ...)`. This list must be present even if the shader does not use any uniforms. For example:
 
     (define-pipeline my-pipeline
       (my-vertex-shader uniform: mvp-matrix inverse-transpose-matrix)
@@ -267,28 +267,26 @@ There is one difference that you need to know when calling `glls-render`’s `de
 
 Of course, if you are defining the shaders in the pipeline, then a separate list of uniforms is not necessary.
 
-`glls-render` causes `define-pipeline` to define several new functions. First is `render-PIPELINE-NAME`. `render-PIPELINE-NAME` takes one argument: a renderable object (see [Renderables](#renderables)).
-
-The `render-PIPELINE-NAME` function works differently depending on whether the `define-pipeline` has been compiled or interpreted (although the end results should stay the same). When `define-pipeline` is compiled, the resulting `render-PIPELINE-NAME` function is compiled directly to efficient (non-branching) C. When `define-pipeline` is interpreted, `render-PIPELINE-NAME` calls a generic rendering function that is not nearly as fast.
-
-The `render-PIPELINE-NAME` function draws the renderable using `draw-elements`. While this is typically the most efficient way to render a set of vertices, sometimes `draw-arrays` is preferable. A function similar to `render-PIPELINE-NAME` is therefore defined, `render-arrays-PIPELINE-NAME`, which functions identically except for calling `draw-arrays` instead of `draw-elements`.
-
 #### Renderables
-In order to use one of the automatically generated render functions, you must have something to render. That’s why `define-pipeline` also defines a function that constructs a renderable object: `make-SHADER-NAME-renderable`. This function takes a number of keyword arguments:
+`glls-render`’s `define-piplelines` defines a function for creating renderable objects:
 
-- `vao:` – A VAO such as those returned by [opengl-glew’s `make-vao`](http://api.call-cc.org/doc/opengl-glew/make-vao). I.e.: A VAO that binds an array of attributes – for each element in the pipeline – as well as an element array.
-- `mode:` – The drawing mode to use when drawing the elements of the VAO. Must be mode that is accepted by (gl-utils’) [mode->gl](http://api.call-cc.org/doc/gl-utils/mode-%3Egl). Defaults to `#:triangles`.
-- `n-elements:` – The number of elements (vertices) to draw.
-- `element-type:` – The type of the values in the VAO’s element array. Must be one of `#:unsigned-byte`, `#:unsigned-short`, or `#:unsigned-int`. Not required if the VAO has no element array (i.e. `render-arrays-PIPELINE-NAME` is being used to render).
-- `mesh:` – A [gl-utils](http://wiki.call-cc.org/eggref/4/gl-utils) mesh, provided in place of `vao:`, `mode:`, `n-elements:`, and `element-type:`.
-- `offset:` – A byte offset to the location of the desired indices to draw.
-- `data:` – An optional pointer to an appropriate glls renderable object. If not provided, a fresh renderable object will be created. [gllsRenderable.h](https://github.com/AlexCharlton/glls/blob/master/gllsRender.h) defines the structs used for renderables. Which struct is used for a given pipeline is chosen based on the number of uniforms present in the pipeline.
+    (make-PIPELINE-NAME-renderable [vao: VAO] [mode: MODE] [n-elements: N-ELEMENTS] [element-type: ELEMENT-TYPE] [mesh: MESH] [offset: OFFSET] [data: DATA] + PIPELINE-SPECIFIC-KEYWORDS)
+
+Where `PIPELINE-NAME` is the name of the pipeline who’s renderables are being created.
+
+- `VAO` – A VAO such as those returned by [opengl-glew’s `make-vao`](http://api.call-cc.org/doc/opengl-glew/make-vao). I.e.: A VAO that binds an array of attributes – for each element in the pipeline – as well as an element array.
+- `MODE` – The drawing mode to use when drawing the elements of the VAO. Must be mode that is accepted by (gl-utils’) [mode->gl](http://api.call-cc.org/doc/gl-utils/mode-%3Egl). Defaults to `#:triangles`.
+- `N-ELEMENTS` – The number of elements (vertices) to draw.
+- `ELEMENT-TYPE` – The type of the values in the VAO’s element array. Must be one of `#:unsigned-byte`, `#:unsigned-short`, or `#:unsigned-int`. Not required if the VAO has no element array (i.e. `render-arrays-PIPELINE-NAME` is being used to render).
+- `MESH` – A [gl-utils](http://wiki.call-cc.org/eggref/4/gl-utils) mesh, provided in place of `VAO`, `MODE`, `N-ELEMENTS`, and `ELEMENT-TYPE`.
+- `OFFSET` – A byte offset to the location of the desired indices to draw.
+- `DATA` – An optional pointer to an appropriate glls renderable object. If not provided, a fresh renderable object will be created. [gllsRenderable.h](https://github.com/AlexCharlton/glls/blob/master/gllsRender.h) defines the structs used for renderables. Which struct is used for a given pipeline is chosen based on the number of uniforms present in the pipeline.
 
 See the [`glDrawElements` documentation](https://www.opengl.org/sdk/docs/man/html/glDrawElements.xhtml) for more information about these expected arguments.
 
-`make-SHADER-NAME-renderable` also expects one keyword argument for each uniform in the pipeline. These arguments should either be an f32vector, an s32vector, a u32vector, a pointer to the uniform data, or – in the case of a texture – a fixnum. Even if the uniform is a single value (e.g. a float), it must still be passed as a vector (or a pointer). This lets the value of the uniform be updated independently of the renderable.
+`make-PIPELINE-NAME-renderable` also expects one keyword argument for each uniform in the pipeline. These arguments should either be an f32vector, an s32vector, a u32vector, a pointer to the uniform data, or – in the case of a texture – a fixnum. Even if the uniform is a single value (e.g. a float), it must still be passed as a vector (or a pointer). This lets the value of the uniform be updated independently of the renderable.
 
-Additionally, there are a number of renderable setters for each of the keyword arguments accepted by `make-SHADER-NAME-renderable`:
+Additionally, there are a number of renderable setters for each of the keyword arguments accepted by `make-PIPELINE-NAME-renderable`:
 
     [procedure] (set-renderable-vao! RENDERABLE VAO)
     [procedure] (set-renderable-n-elements! RENDERABLE N-ELEMENTS)
@@ -296,18 +294,30 @@ Additionally, there are a number of renderable setters for each of the keyword a
     [procedure] (set-renderable-mode! RENDERABLE MODE)
     [procedure] (set-renderable-offset! RENDERABLE OFFSET)
 
-These setters accept two arguments: a renderable and a value. The values correspond to those that `make-SHADER-NAME-renderable` accepts.
+These setters accept two arguments: a renderable and a value. The values correspond to those that `make-PIPELINE-NAME-renderable` accepts.
 
-And for each uniform in the pipeline, `set-SHADER-NAME-renderable-UNIFORM-NAME!` is also created.
+And for each uniform in the pipeline, `set-PIPELINE-NAME-renderable-UNIFORM-NAME!` is also created.
 
     [procedure] (renderable-size PIPELINE)
 
 Returns the size, in bytes, of the memory needed for a renderable belonging to `PIPELINE`.
 
-#### Fast render functions
-When compiled, the render function defined by `define-pipeline` is actually a combination of three “fast” render functions: a begin render function, a render function, and an end render function. The array rendering function is a similar combination: the begin render function, an array render function and the end render function. This is done so that, if desired, all of the renderables that belong to the same pipeline may be rendered at the same time, without needing to perform expensive calls like program changes or texture binding more than once. To use these functions, simply call the begin render function with the first renderable, then call the render (or array render) function on all renderables (including the first), finally calling the end render function (with no arguments) to clean up.
+#### Rendering renderables
+    (render-PIPELINE-NAME RENDERABLE)
+    (render-arrays-PIPELINE-NAME RENDERABLE)
 
-`define-pipeline` does not define all of these functions separately, but instead defines a single function with which to access them: `PIPELINE-NAME-fast-render-functions`. This function returns eight values: the begin render function, the render function, the end render function, the array render function, and pointers to those same C functions in that order.
+Where `PIPELINE-NAME` is the name of the pipeline who’s renderables are being rendered. `render-PIPELINE-NAME` and `render-arrays-PIPELINE-NAME` both render the given renderable.
+
+These render functions work differently depending on whether the `define-pipeline` has been compiled or interpreted (although the end results should look the same). When `define-pipeline` is compiled, the resulting render functions are compiled directly to efficient (non-branching) C. When `define-pipeline` is interpreted, the render functions call a generic rendering function that is not nearly as fast.
+
+The `render-PIPELINE-NAME` function draws the renderable using `draw-elements`. While this is typically the most efficient way to render a set of vertices, sometimes `draw-arrays` is preferable. `render-arrays-PIPELINE-NAME` functions identically except for calling `draw-arrays` instead of `draw-elements`.
+
+##### Fast render functions
+When compiled, the render function defined by `define-pipeline` is actually a combination of three “fast” render functions: a *begin-render* function, a *render* function, and an *end-render* function. The array rendering function is a similar combination: the *begin-render* function, an *array-render* function and the *end-render* function. This is done so that, if desired, all of the renderables that belong to the same pipeline may be rendered at the same time, without needing to perform expensive calls like program changes or texture binding more than once. To use these functions, call the *begin-render* function with the first renderable, then call the *render* (or *array-render*) function on all renderables (including the first), finally calling the *end-render* function (with no arguments) to clean up.
+
+    (PIPELINE-NAME-fast-render-functions)
+
+`define-pipeline` does not define all of the render functions separately, but instead defines a single function with which to access them: `PIPELINE-NAME-fast-render-functions`, where `PIPELINE-NAME` is the name of the pipeline. This function returns eight values: the *begin-render* function, the *render* function, the *end-render* function, the *array-render* function, and pointers to those same C functions in that order.
 
     [parameter] unique-textures?
 
@@ -316,7 +326,7 @@ This parameter, defaulting to `#t`, controls where textures are bound in the fas
 #### Utilities
     [macro] (export-pipeline . PIPELINES)
 
-Since glls-render causes `define-pipeline` to define multiple functions, this macro exports everything related to each pipeline in `PIPELINES`, except for the `set-SHADER-NAME-renderable-UNIFORM!` setters. These must be exported individually.
+Since glls-render causes `define-pipeline` to define multiple functions, this macro exports everything related to each pipeline in `PIPELINES`, except for the `set-PIPELINE-NAME-renderable-UNIFORM!` setters. These must be exported individually.
 
 
 ## Examples
