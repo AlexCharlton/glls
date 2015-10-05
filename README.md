@@ -294,9 +294,9 @@ Additionally, there are a number of renderable setters for each of the keyword a
     [procedure] (set-renderable-mode! RENDERABLE MODE)
     [procedure] (set-renderable-offset! RENDERABLE OFFSET)
 
-These setters accept two arguments: a renderable and a value. The values correspond to those that `make-PIPELINE-NAME-renderable` accepts.
+    (set-PIPELINE-NAME-renderable-UNIFORM-NAME! RENDERABLE UNIFORM-VALUE)
 
-And for each uniform in the pipeline, `set-PIPELINE-NAME-renderable-UNIFORM-NAME!` is also created.
+These setters accept two arguments: a renderable and a value. The values correspond to those that `make-PIPELINE-NAME-renderable` accepts. For each uniform in the pipeline, a function named `set-PIPELINE-NAME-renderable-UNIFORM-NAME!` is created.
 
     [procedure] (renderable-size PIPELINE)
 
