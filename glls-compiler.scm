@@ -94,7 +94,7 @@
 (define (compile-inputs in out uniform version shader-type)
   (define (in/out-type->glsl-type type)
     (cond
-     ((or (>= version 330)
+     ((or (>= version 130)
           (equal? type 'uniform)) type)
      ((and (equal? shader-type #:vertex)
            (equal? type 'in)) 'attribute)
