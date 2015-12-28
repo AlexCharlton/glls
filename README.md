@@ -27,7 +27,7 @@ glls contains three modules: glls-render, glls, and glls-compiler. glls-render r
 
     [parameter] glsl-version
 
-The default GLSL version used by shaders. Defaults to `120` on GL ES platforms, `330` otherwise.
+The default GLSL version used by shaders. Defaults to `120` on GL ES platforms, `330` otherwise. Can also be a list, see `<version>` under [Shader syntax](#shader-syntax).
 
 ### Shaders
     [record] (shader TYPE SOURCE INPUTS OUTPUTS UNIFORMS PROGRAM)
@@ -106,7 +106,7 @@ The shaders of glls – the forms that `define-shader`, `define-pipeline`, etc. 
 
 `outputs` is a list of the output variables from the shader. These are given in `(name type)` lists.
 
-`version` is the integer version number of the shader, i.e. the number you would write at the top of the shader source (e.g. `#version 410`). Defaults to the `glsl-version` parameter.
+`version` is the integer version number of the shader, i.e. the number you would write at the top of the shader source (e.g. `#version 410`). Defaults to the `glsl-version` parameter. This can also be a list of the form `'(<version> <specifiers> ...)` where the specifiers will be appended to the `#version` line when compiled to glsl. For example, `'(300 es)` becomes `#version 300 es`.
 
 `imports` is the list of shaders that the current shader depends on. See the section [Shaders that export](#shaders-that-export) for more details. Defaults to `()`
 
