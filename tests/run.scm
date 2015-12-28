@@ -112,6 +112,11 @@
                                     #:version 120)
                         (define (main) #:void
                           (set! gl:frag-color (vec4 c 1.0))))))
+  (test "es version 100 uses in (not attributes)"
+        "#version 100 es plus anything\n\nin vec3 c;\n;\n"
+        (compile-glls '((#:fragment input: ((c #:vec3))
+                                    #:version (100 es plus anything))
+                        "")))
   ) ; end test-group shaders
 
 (define-shader foo
