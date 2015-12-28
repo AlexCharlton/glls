@@ -27,7 +27,12 @@ glls contains three modules: glls-render, glls, and glls-compiler. glls-render r
 
     [parameter] glsl-version
 
-The default GLSL version used by shaders. Defaults to `120` on GL ES platforms, `330` otherwise.
+The default GLSL version used by shaders. Defaults to `120` on GL ES platforms, `330` otherwise. When compiling a file with a shader, this modifying this parameter will only take effect if you change it before the compilation phase. E.g.:
+
+``` Scheme
+(use-for-syntax glls)
+(begin-for-syntax (glsl-version 300))
+```
 
 ### Shaders
     [record] (shader TYPE SOURCE INPUTS OUTPUTS UNIFORMS PROGRAM)

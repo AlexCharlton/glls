@@ -18,20 +18,20 @@
     (else "-lGL")))
 
 (make (("glls.so" ("glls.scm" "glls-compiler.import.so")
-        (compile -s ,compile-options , gl-client glls.scm -J))
+        (compile -s ,compile-options ,gl-client glls.scm -J))
        ("glls.import.so" ("glls.so")
         (compile -s ,compile-options glls.import.scm))
        ("glls-compiler.so" ("glls-compiler.scm")
-        (compile -s ,compile-options , gl-client glls-compiler.scm -J))
+        (compile -s ,compile-options ,gl-client glls-compiler.scm -J))
        ("glls-compiler.import.so" ("glls-compiler.so")
         (compile -s ,compile-options glls-compiler.import.scm))
        ("glls-render.so" ("glls-renderable.import.so" "glls.import.so"
                           "glls-render.scm")
-        (compile -s ,compile-options , gl-client glls-render.scm -J))
+        (compile -s ,compile-options ,gl-client glls-render.scm -J))
        ("glls-render.import.so" ("glls-render.so")
         (compile -s ,compile-options glls-render.import.scm))
        ("glls-renderable.so" ("glls-compiler.import.so" "glls-renderable.scm")
-        (compile -s ,compile-options , gl-client ,gl-link-options
+        (compile -s ,compile-options ,gl-client ,gl-link-options
                  glls-renderable.scm -J))
        ("glls-renderable.import.so" ("glls-renderable.so")
         (compile -s ,compile-options glls-renderable.import.scm)))
