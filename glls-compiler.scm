@@ -69,36 +69,42 @@
                             (member k '(input: output: uniform: version: use: export:)))
                   (syntax-error "Key not recognized:" k)))
               keys))
+  (define (normalize-version version)
+    (match version
+      ( (? number? version) (list version))
+      ( ((? number? version) rest ...) (cons version rest))
+      (else (error "invalid glsl version (expecting number or '(number ...))" version))))
   (define (compile type body #!key
                    (input '()) (output '()) (uniform '())
                    (version (glsl-version))
                    (use '()) (export '()))
     (parameterize ((exports export)
                    (export-prototypes '()))
-      (let-values (((declarations in out uni) (compile-inputs input output uniform
-                                                              version type)))
-        (values (fmt #f (cat "#version " (number->string version) "\n\n"
-                             (if (null? use)
-                                 ""
-                                 "<<imports>>\n")
-                             (if (null? declarations)
-                                 ""
-                                 (apply c-begin declarations))
-                             (apply c-begin (map glsl->fmt body))))
-                in out uni use (fmt #f (apply-cat (export-prototypes)))))))
+      (let ((version-spec (normalize-version version)))
+        (let-values (((declarations in out uni) (compile-inputs input output uniform
+                                                                version-spec type)))
+          (values (fmt #f (cat "#version " (fmt-join dsp version-spec " ") "\n\n"
+                               (if (null? use)
+                                   ""
+                                   "<<imports>>\n")
+                               (if (null? declarations)
+                                   ""
+                                   (apply c-begin declarations))
+                               (apply c-begin (map glsl->fmt body))))
+                  in out uni use (fmt #f (apply-cat (export-prototypes))))))))
   (match form
     ((((? shader-type? shader-type) . (? valid-keys? keys)) body . body-rest)
      (apply compile shader-type (cons* body body-rest) keys))
     (_ (syntax-error "Poorly formed shader:" form))))
 
-(define (compile-inputs in out uniform version shader-type)
+(define (compile-inputs in out uniform version-spec shader-type)
   (define (in/out-type->glsl-type type)
-    (cond
-     ((or (>= version 330)
-          (equal? type 'uniform)) type)
-     ((and (equal? shader-type #:vertex)
-           (equal? type 'in)) 'attribute)
-     (else 'varying)))
+    (match (cons* shader-type type version-spec)
+      ((shader-type type (? (cut >= <> 130) version) _ ...) type)
+      ((shader-type type (? (cut >= <> 100) version) 'es _ ...) type)
+      ((shader-type 'uniform _ ...) 'uniform)
+      (('#:vertex 'in _ ...) 'attribute)
+      (else 'varying)))
   (define (params p type)
     (map (lambda (param)
            (let ((p (parameter param)))
