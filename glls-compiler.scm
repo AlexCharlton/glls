@@ -66,7 +66,7 @@
   (define (valid-keys? keys)
     (for-each (lambda (k)
                 (unless (or (not (keyword? k))
-                            (member k '(input: output: uniform: version: use: export:)))
+                            (member k '(input: output: uniform: version: use: export: prelude:)))
                   (syntax-error "Key not recognized:" k)))
               keys))
   (define (normalize-version version)
@@ -76,6 +76,7 @@
       (else (error "invalid glsl version (expecting number or '(number ...))" version))))
   (define (compile type body #!key
                    (input '()) (output '()) (uniform '())
+                   prelude
                    (version (glsl-version))
                    (use '()) (export '()))
     (parameterize ((exports export)
@@ -84,6 +85,7 @@
         (let-values (((declarations in out uni) (compile-inputs input output uniform
                                                                 version-spec type)))
           (values (fmt #f (cat "#version " (fmt-join dsp version-spec " ") "\n\n"
+                               (or prelude "")
                                (if (null? use)
                                    ""
                                    "<<imports>>\n")
