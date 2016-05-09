@@ -5,6 +5,9 @@
   (test 'floatBitsToUint (symbol->glsl 'float-bits-to-uint))
   (test 'shadow2DProjLod (symbol->glsl 'shadow-2d-proj-lod))
   (test 'sampler2DMSArray (symbol->glsl 'sampler-2d-ms-array))
+  (test '= (symbol->glsl '=))
+  (test '== (symbol->glsl '==))
+  (test 'rgb_hsl (symbol->glsl 'rgb->hsl))
   (test 'EmitVertex (symbol->glsl 'emit-vertex))
   (test 'EndPrimitive (symbol->glsl 'end-primitive)))
 

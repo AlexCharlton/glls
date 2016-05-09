@@ -152,10 +152,15 @@
                          (lambda (m) (let* ((s (irregex-match-substring m))
                                        (char1 (string-ref s 0)))
                                   (string char1 #\D)))))
+  (define (illegal-chars str)
+    (if (hash-table-ref/default *special-functions* (string->symbol str) #f)
+        str
+        (irregex-replace/all "[!@$%^&*><+=-]" str "_")))
   (define (multi-sample str)
     (irregex-replace/all "DMs" str "DMS"))
   (define (all sym)
-    (string->symbol (multi-sample (dimensions (cammel-case (symbol->string sym))))))
+    (string->symbol (multi-sample (dimensions (illegal-chars
+                                               (cammel-case (symbol->string sym)))))))
   (case sym
     ((emit-vertex) 'EmitVertex)
     ((end-primitive) 'EndPrimitive)
@@ -334,7 +339,7 @@
      (case . ,c-case)
      (case/fallthrough . ,c-case/fallthrough)
      (default . ,c-default)
-     
+
      (++ . ,c++)
      (-- . ,c--)
      (+ . ,c+)
