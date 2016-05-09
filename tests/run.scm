@@ -26,12 +26,12 @@
   (test "int foo = 1;\nfoo;\n"
         (compile-expr '(let ((foo #:int 1))
                          foo)))
-  (test "int foo;\nint bar = 4;\nvec4 quox[];\nvec4 baz[4];\nvec4 box[4] = 1(3, 3, 4);\nif (foo == 1) {\n    foo = 4;\n}\n"
+  (test "int foo;\nint bar = 4;\nvec4 quox[];\nvec4 baz[4];\nvec4 box[4] = vec4[](1, 3, 3, 4);\nif (foo == 1) {\n    foo = 4;\n}\n"
         (compile-expr '(let ((foo #:int)
                              (bar #:int 4)
                              (quox (#:array #:vec4))
                              (baz (#:array #:vec4 4))
-                             (box (#:array #:vec4 4) (1 3 3 4)))
+                             (box (#:array #:vec4 4) #(1 3 3 4)))
                          (cond ((= foo 1) (set! foo 4))))))
   (test "if (x < 0) {\n    y = 1;\n} else if (x < 5) {\n    x = 1;\n    y = 2;\n} else {\n    y = 3;\n}\n"
         (compile-expr '(cond
