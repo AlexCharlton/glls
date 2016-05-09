@@ -2,6 +2,8 @@
 #include <OpenGL/gl.h>
 #elif defined (GLES)
 #include <GLES3/gl3.h>
+#elif defined (_WIN32)
+#include <GL/glew.h>
 #else
 #include <GL/gl.h>
 #endif

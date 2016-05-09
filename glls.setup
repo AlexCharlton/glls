@@ -13,7 +13,7 @@
 (define gl-link-options
   (cond-expand
     (macosx "-framework OpenGL")
-    (windows "-lopengl32")
+    (windows "-lglew32")
     ((or arm gles) "-lGLESv2")
     (else "-lGL")))
 
