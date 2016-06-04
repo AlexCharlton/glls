@@ -7,7 +7,7 @@
   (test 'sampler2DMSArray (symbol->glsl 'sampler-2d-ms-array))
   (test '= (symbol->glsl '=))
   (test '== (symbol->glsl '==))
-  (test 'rgb_hsl (symbol->glsl 'rgb->hsl))
+  (test 'rgb__62__hsl (symbol->glsl 'rgb->hsl))
   (test 'EmitVertex (symbol->glsl 'emit-vertex))
   (test 'EndPrimitive (symbol->glsl 'end-primitive)))
 

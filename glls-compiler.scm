@@ -155,7 +155,13 @@
   (define (illegal-chars str)
     (if (hash-table-ref/default *special-functions* (string->symbol str) #f)
         str
-        (irregex-replace/all "[!@$%^&*><+=-]" str "_")))
+        (irregex-replace/all "[!@$%^&*><+=-?/]" str
+                             (lambda (m)
+                               (sprintf
+                                "__~a__"
+                                (char->integer
+                                 (string-ref (irregex-match-substring m)
+                                             0)))))))
   (define (multi-sample str)
     (irregex-replace/all "DMs" str "DMS"))
   (define (all sym)
