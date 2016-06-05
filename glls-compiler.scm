@@ -185,10 +185,23 @@
   (or (symbol? x)
       ((list-of? symbol?) x)))
 
+(define (compound-type? x)
+  (match x
+    (((or '#:array 'array) (? type? type) (? number? size)) #t)
+    (((or '#:array 'array) (? type? type)) #t)
+    ((? type? type) #t)
+    (else #f)))
+
 (define (type->glsl x)
   (if (list? x)
       (map symbol->glsl x)
       (symbol->glsl x)))
+
+(define (return-type->glsl x)
+  (match x
+    (((or '#:array 'array) (? type? type) size)
+     (c-wrap-stmt (cat (symbol->glsl type) "[" size "]")))
+    (t (type->glsl t))))
 
 (define parameter
   (match-lambda
@@ -209,7 +222,7 @@
             (symbol->glsl name)
             (cond
              ((null? init)'())
-             ((vector? (car init)) 
+             ((vector? (car init))
               (list (cat (type->glsl type)
                          "[]("
                          (fmt-join c-expr
@@ -232,17 +245,17 @@
 
 (define glsl:define
   (match-lambda*
-    (((name . params) (? type? return-type) body . body-rest)
+    (((name . params) (? compound-type? return-type) body . body-rest)
      (when (member name (exports))
        (export-prototypes
         (cons (c-prototype (type->glsl return-type) (symbol->glsl name)
                            (map parameter params))
               (export-prototypes))))
-     (apply c-fun (type->glsl return-type) (glsl->fmt name)
+     (apply c-fun (return-type->glsl return-type) (glsl->fmt name)
             (map parameter params)
             (map glsl->fmt (cons body body-rest))))
-    (((name . params) (? type? return-type))
-     (c-prototype (type->glsl return-type) (symbol->glsl name)
+    (((name . params) (? compound-type? return-type))
+     (c-prototype (return-type->glsl return-type) (symbol->glsl name)
                   (map parameter params)))
     (a (apply assignment a))))
 

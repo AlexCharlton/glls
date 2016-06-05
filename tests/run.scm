@@ -45,6 +45,10 @@
                         (else (set! y 3)))))
   (test "vec3 foo (in int x, int y) {\n    x = y;\n    return bar;\n}\n"
         (compile-expr '(define (foo (x (in: #:int)) (y #:int)) #:vec3
+                         (set! x y)
+                         bar)))
+  (test "vec3[2] foo (in int x, int y) {\n    x = y;\n    return bar;\n}\n"
+        (compile-expr '(define (foo (x (in: #:int)) (y #:int)) (#:array #:vec3 2)
                   (set! x y)
                   bar)))
   (test "for (int i = 0; i < 5; ++i) {\n    foo(i);\n}\n"
@@ -54,7 +58,7 @@
         (compile-expr '(while (> i 4)
                          (if thing (break))
                          (foo i))))
-  
+
   (test-error (compile-expr '(let ((foo (#:array #:int 4) (1 2))))))
 
   (test "a[1];\n"
